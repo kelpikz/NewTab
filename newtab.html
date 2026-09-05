@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Tab</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="background" class="background"></div>
+
+  <main class="content">
+    <nav id="quicklinks" class="quicklinks"></nav>
+    <section id="search-bar" class="search-bar"></section>
+    <section id="routines" class="routines"></section>
+  </main>
+
+  <dialog id="add-site-dialog" class="dialog">
+    <form id="add-site-form" method="dialog">
+      <h2 id="add-site-title">Add site</h2>
+      <label>
+        Name
+        <input type="text" id="site-name" placeholder="e.g. GitHub" required />
+      </label>
+      <label>
+        URL
+        <input type="url" id="site-url" placeholder="https://github.com" required />
+      </label>
+      <label>
+        Tab
+        <select id="site-group"></select>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" id="cancel-add" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="group-dialog" class="dialog">
+    <form id="group-form" method="dialog">
+      <h2 id="group-dialog-title">New tab</h2>
+      <label>
+        Name
+        <input type="text" id="group-name" placeholder="e.g. Productivity" required />
+      </label>
+      <div class="dialog-actions">
+        <button type="button" id="delete-group" class="btn btn-danger">Delete</button>
+        <span class="dialog-actions-spacer"></span>
+        <button type="button" id="cancel-group" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="routine-dialog" class="dialog">
+    <form id="routine-form" method="dialog">
+      <h2 id="routine-dialog-title">New routine</h2>
+      <label>
+        Name
+        <input type="text" id="routine-name" placeholder="e.g. Morning" required />
+      </label>
+      <label>
+        URLs (one per line)
+        <textarea id="routine-urls" rows="5" placeholder="https://mail.google.com&#10;https://news.ycombinator.com" required></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" id="delete-routine" class="btn btn-danger">Delete</button>
+        <span class="dialog-actions-spacer"></span>
+        <button type="button" id="cancel-routine" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settings-dialog" class="dialog settings-dialog">
+    <form id="settings-form" method="dialog">
+      <h2>Search settings</h2>
+      <div id="settings-engines"></div>
+      <div class="dialog-actions">
+        <button type="button" id="cancel-settings" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <button type="button" id="settings-button" class="settings-button" title="Settings">⚙</button>
+  <p id="photo-credit" class="photo-credit"></p>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

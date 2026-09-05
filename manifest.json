@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "My New Tab",
+  "version": "1.0.0",
+  "description": "A minimal new tab page with quick links and beautiful backgrounds.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://picsum.photos/*",
+    "https://fastly.picsum.photos/*"
+  ]
+}
