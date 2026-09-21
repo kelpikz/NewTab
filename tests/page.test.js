@@ -150,10 +150,10 @@ describe('new tab page', { skip }, () => {
   test('the palette turns what you typed into a task', async () => {
     await page.press('k', { ctrlKey: true });
     await page.fill('.pal-input', 'call the plumber');
-    const row = page
-      .$$('.pal-row')
-      .find((node) => node.textContent.includes('Add task'));
+    const row = page.$$('.pal-row').find((node) => node.textContent.includes('Add task'));
     assert.ok(row, 'an add-task row is offered');
+    // It sits under its own heading, below anything the words actually match.
+    assert.ok(page.$$('.pal-group').some((node) => node.textContent === 'Keep it'));
 
     await page.click(row);
     await page.wait(200);

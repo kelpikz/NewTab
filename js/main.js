@@ -423,7 +423,7 @@ function queryCommands(query) {
   if (text.length < 3 || asUrl(text) || answer(text)) return [];
   return [
     {
-      type: 'command',
+      type: 'capture',
       glyph: '✓',
       title: `Add task “${text}”`,
       run: async () => {
@@ -435,7 +435,7 @@ function queryCommands(query) {
       },
     },
     {
-      type: 'command',
+      type: 'capture',
       glyph: '◎',
       title: `Make “${text}” today's focus`,
       run: async () => {

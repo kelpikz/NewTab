@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "My New Tab",
-  "version": "2.0.0",
-  "description": "A calm new tab: quick links, command palette, weather, tasks, notes and a focus timer.",
+  "version": "2.1.0",
+  "description": "A calm new tab: quick links, a command palette that does sums, weather, tasks, habits, countdowns, notes and a focus timer.",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },

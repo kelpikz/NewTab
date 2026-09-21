@@ -28,10 +28,22 @@ export const GROUP_LABEL = {
   bookmark: 'Bookmarks',
   top: 'Frequent',
   history: 'History',
+  capture: 'Keep it',
   search: 'Search',
 };
 
-const GROUP_ORDER = ['answer', 'command', 'link', 'routine', 'tab', 'bookmark', 'top', 'history', 'search'];
+const GROUP_ORDER = [
+  'answer',
+  'command',
+  'link',
+  'routine',
+  'tab',
+  'bookmark',
+  'top',
+  'history',
+  'capture',
+  'search',
+];
 
 async function safe(promise, fallback) {
   try {
