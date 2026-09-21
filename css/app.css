@@ -55,6 +55,7 @@
 /* Weather */
 
 .weather {
+  position: relative;
   display: flex;
   align-items: center;
   min-height: 34px;
@@ -85,6 +86,117 @@
 .weather-empty {
   font-size: 12.5px;
   color: var(--text-dim);
+}
+
+.weather-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 40;
+  min-width: 248px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+
+.weather.open .weather-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.weather-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.weather-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weather-detail-label {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.weather-detail-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.weather-days {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.weather-day {
+  display: grid;
+  grid-template-columns: 1fr 20px 34px 26px 26px;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+
+.weather-day-name {
+  color: var(--text-dim);
+}
+
+.weather-day-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  color: var(--text-dim);
+}
+
+.weather-day-rain {
+  font-size: 10.5px;
+  color: var(--accent);
+  text-align: right;
+}
+
+.weather-day-high {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.weather-day-low {
+  text-align: right;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.weather-change {
+  width: 100%;
+  margin-top: 10px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.weather-change:hover {
+  background: var(--glass-hover);
+  color: var(--text);
 }
 
 .weather-loading {

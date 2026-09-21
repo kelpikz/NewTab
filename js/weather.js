@@ -7,6 +7,9 @@ const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 const GEOCODE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const CACHE_KEY = 'weatherCache';
 const CACHE_TTL_MS = 30 * 60 * 1000;
+const FORECAST_DAYS = 5;
+// Bumped when the shape of the cached reading changes.
+const CACHE_VERSION = 'v2';
 
 const SVG = (body) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
@@ -63,7 +66,28 @@ export async function geocode(name) {
 }
 
 function cacheKey(place, units) {
-  return `${place.lat},${place.lon},${units}`;
+  return `${place.lat},${place.lon},${units},${CACHE_VERSION}`;
+}
+
+/** "Today", then short weekday names. */
+export function dayName(dateText, index) {
+  if (index === 0) return 'Today';
+  const date = new Date(`${dateText}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateText;
+  return date.toLocaleDateString(undefined, { weekday: 'short' });
+}
+
+/** Turn the daily arrays Open-Meteo returns into one row per day. */
+export function readDays(daily) {
+  if (!daily?.time) return [];
+  return daily.time.slice(0, FORECAST_DAYS).map((date, index) => ({
+    date,
+    name: dayName(date, index),
+    high: Math.round(daily.temperature_2m_max[index]),
+    low: Math.round(daily.temperature_2m_min[index]),
+    code: daily.weather_code?.[index] ?? 3,
+    rain: daily.precipitation_probability_max?.[index] ?? null,
+  }));
 }
 
 export async function fetchWeather(place, units, { force = false } = {}) {
@@ -77,8 +101,8 @@ export async function fetchWeather(place, units, { force = false } = {}) {
     latitude: String(place.lat),
     longitude: String(place.lon),
     current: 'temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m',
-    daily: 'temperature_2m_max,temperature_2m_min',
-    forecast_days: '1',
+    daily: 'temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max',
+    forecast_days: String(FORECAST_DAYS),
     timezone: 'auto',
     temperature_unit: units === 'imperial' ? 'fahrenheit' : 'celsius',
     wind_speed_unit: units === 'imperial' ? 'mph' : 'kmh',
@@ -97,6 +121,7 @@ export async function fetchWeather(place, units, { force = false } = {}) {
     wind: Math.round(raw.current.wind_speed_10m),
     high: Math.round(raw.daily.temperature_2m_max[0]),
     low: Math.round(raw.daily.temperature_2m_min[0]),
+    days: readDays(raw.daily),
     unit: units === 'imperial' ? '°F' : '°C',
     windUnit: units === 'imperial' ? 'mph' : 'km/h',
     place: place.label ?? place.name,
@@ -108,6 +133,55 @@ export async function fetchWeather(place, units, { force = false } = {}) {
 
 function iconNode(name) {
   return el('span', { class: 'weather-icon', html: ICONS[name] ?? ICONS.cloud });
+}
+
+/** The panel under the reading: today's detail and the next few days. */
+function forecastPanel(data, onConfigure) {
+  const detail = [
+    ['Feels like', `${data.feels}${data.unit}`],
+    ['Humidity', `${data.humidity}%`],
+    ['Wind', `${data.wind} ${data.windUnit}`],
+  ];
+
+  const rows = (data.days ?? []).map((day) => {
+    const { label, icon } = describeCode(day.code, true);
+    return el(
+      'div',
+      { class: 'weather-day' },
+      el('span', { class: 'weather-day-name', text: day.name }),
+      el('span', { class: 'weather-day-icon', html: ICONS[icon] ?? ICONS.cloud, title: label }),
+      el('span', {
+        class: 'weather-day-rain',
+        text: day.rain === null ? '' : `${day.rain}%`,
+      }),
+      el('span', { class: 'weather-day-high', text: `${day.high}°` }),
+      el('span', { class: 'weather-day-low', text: `${day.low}°` })
+    );
+  });
+
+  return el(
+    'div',
+    { class: 'weather-panel', onClick: (event) => event.stopPropagation() },
+    el(
+      'div',
+      { class: 'weather-detail' },
+      ...detail.map(([label, value]) =>
+        el(
+          'span',
+          { class: 'weather-detail-item' },
+          el('span', { class: 'weather-detail-label', text: label }),
+          el('span', { class: 'weather-detail-value', text: value })
+        )
+      )
+    ),
+    rows.length ? el('div', { class: 'weather-days' }, ...rows) : null,
+    el('button', {
+      type: 'button',
+      class: 'weather-change',
+      text: `${data.place} · change`,
+      onClick: () => onConfigure?.(),
+    })
+  );
 }
 
 export async function renderWeather(container, config, { onConfigure } = {}) {
@@ -131,25 +205,36 @@ export async function renderWeather(container, config, { onConfigure } = {}) {
   try {
     const data = await fetchWeather(place, units);
     const { label, icon } = describeCode(data.code, data.isDay);
-    container.replaceChildren(
-      el(
-        'button',
-        {
-          type: 'button',
-          class: 'weather-card',
-          title: `Feels like ${data.feels}${data.unit} · Humidity ${data.humidity}% · Wind ${data.wind} ${data.windUnit}`,
-          onClick: () => onConfigure?.(),
+    const panel = forecastPanel(data, onConfigure);
+
+    const close = () => container.classList.remove('open');
+    document.addEventListener('click', close);
+    document.addEventListener('keydown', (event) => event.key === 'Escape' && close());
+
+    const card = el(
+      'button',
+      {
+        type: 'button',
+        class: 'weather-card',
+        title: 'Show the forecast',
+        'aria-expanded': 'false',
+        onClick: (event) => {
+          event.stopPropagation();
+          const open = container.classList.toggle('open');
+          card.setAttribute('aria-expanded', open ? 'true' : 'false');
         },
-        iconNode(icon),
-        el(
-          'span',
-          { class: 'weather-body' },
-          el('span', { class: 'weather-temp', text: `${data.temp}${data.unit}` }),
-          el('span', { class: 'weather-meta', text: `${label} · H ${data.high}° L ${data.low}°` }),
-          el('span', { class: 'weather-place', text: data.place })
-        )
+      },
+      iconNode(icon),
+      el(
+        'span',
+        { class: 'weather-body' },
+        el('span', { class: 'weather-temp', text: `${data.temp}${data.unit}` }),
+        el('span', { class: 'weather-meta', text: `${label} · H ${data.high}° L ${data.low}°` }),
+        el('span', { class: 'weather-place', text: data.place })
       )
     );
+
+    container.replaceChildren(card, panel);
   } catch {
     container.replaceChildren(
       el('button', {

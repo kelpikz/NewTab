@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import './helpers/env.js';
 import { durationFor, remainingMs, formatDuration, freshState, normalizeState } from '../js/timer.js';
-import { describeCode } from '../js/weather.js';
+import { describeCode, dayName, readDays } from '../js/weather.js';
 import { isStale, GRADIENTS } from '../js/background.js';
 import { formatTime, greetingFor } from '../js/clock.js';
 import { buildSearchUrl, parsePrefix } from '../js/engines.js';
@@ -82,6 +82,33 @@ test('an unknown weather code still renders', () => {
 });
 
 /* Background ------------------------------------------------------- */
+
+test('the daily arrays become one row per day', () => {
+  const days = readDays({
+    time: ['2026-09-23', '2026-09-24', '2026-09-25'],
+    temperature_2m_max: [21.4, 19.8, 24.2],
+    temperature_2m_min: [11.2, 9.9, 13.5],
+    weather_code: [0, 61, 3],
+    precipitation_probability_max: [0, 80, 10],
+  });
+  assert.equal(days.length, 3);
+  assert.equal(days[0].name, 'Today');
+  assert.deepEqual(
+    { high: days[0].high, low: days[0].low, code: days[0].code, rain: days[0].rain },
+    { high: 21, low: 11, code: 0, rain: 0 }
+  );
+  assert.equal(days[1].rain, 80);
+});
+
+test('a forecast with no days does not break', () => {
+  assert.deepEqual(readDays(undefined), []);
+  assert.deepEqual(readDays({}), []);
+});
+
+test('the first day is named "Today" and the rest by weekday', () => {
+  assert.equal(dayName('2026-09-23', 0), 'Today');
+  assert.equal(dayName('2026-09-24', 1), 'Thu');
+});
 
 test('a missing photo is always stale', () => {
   assert.equal(isStale(null, 'never'), true);

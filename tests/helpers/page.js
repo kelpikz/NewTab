@@ -23,7 +23,12 @@ const PIXEL_BYTES = Buffer.from(
   'base64'
 );
 
-export async function loadPage({ fetchImpl } = {}) {
+/**
+ * `seed` fills storage before the page starts, so a test can open the page
+ * with settings, links or a location already in place. Keys are storage keys
+ * without the `newtab:<area>:` prefix, e.g. `{ sync: { settings: {...} } }`.
+ */
+export async function loadPage({ fetchImpl, seed } = {}) {
   const { JSDOM } = await import('jsdom');
   const html = readFileSync(join(root, 'newtab.html'), 'utf8');
   const errors = [];
@@ -97,6 +102,12 @@ export async function loadPage({ fetchImpl } = {}) {
         throw new Error('offline');
       })
   );
+
+  Object.entries(seed ?? {}).forEach(([area, items]) => {
+    Object.entries(items).forEach(([key, value]) => {
+      window.localStorage.setItem(`newtab:${area}:${key}`, JSON.stringify(value));
+    });
+  });
 
   window.addEventListener('error', (event) => errors.push(event.message));
   const onRejection = (reason) => errors.push(`unhandled rejection: ${reason}`);
