@@ -24,6 +24,7 @@ describe('new tab page', { skip }, () => {
     assert.equal(page.$$('.engine-menu-item').length, 3);
     assert.equal(page.$$('.ql-grid .quicklink').length, 5, 'four links plus the add tile');
     assert.ok(page.$('.task-input'), 'task input');
+    assert.ok(page.$('.habit-input'), 'habit input');
     assert.ok(page.$('.notes-area'), 'notes');
     assert.equal(page.$$('#routines .rw-row').length, 2);
     assert.equal(page.text('.timer-time'), '25:00');
@@ -47,6 +48,25 @@ describe('new tab page', { skip }, () => {
 
     await page.click(page.$$('.card-btn').find((node) => node.textContent === 'Clear done'));
     assert.equal(page.$$('.task').length, 0);
+  });
+
+  test('adds a habit, ticks today and counts the run', async () => {
+    const input = page.$('.habit-input');
+    input.value = 'Read';
+    await page.press('Enter', { target: '.habit-input' });
+
+    assert.equal(page.$$('.habit').length, 1);
+    assert.equal(page.text('.habit-name'), 'Read');
+    assert.equal(page.$$('.habit-dot').length, 7);
+    assert.equal(page.text('.habit-streak'), '–');
+
+    await page.click(page.$$('.habit-dot').at(-1));
+    assert.equal(page.text('.habit-streak'), '1');
+    assert.ok(page.$('.habit.done-today'));
+    assert.match(page.text('.card-habits .card-title'), /1\/1/);
+
+    await page.click('.habit-remove');
+    assert.equal(page.$$('.habit').length, 0);
   });
 
   test('saves notes while typing', async () => {

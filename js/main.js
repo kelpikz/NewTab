@@ -22,6 +22,7 @@ import { renderClock } from './clock.js';
 import { renderDailyFocus } from './focus.js';
 import { renderWeather } from './weather.js';
 import { renderTasks } from './tasks.js';
+import { renderHabits } from './habits.js';
 import { renderNotes } from './notes.js';
 import { renderTimer } from './timer.js';
 import { initPalette, openPalette, reloadEngines } from './palette.js';
@@ -36,6 +37,7 @@ const dom = {
   search: document.getElementById('search-bar'),
   quicklinks: document.getElementById('quicklinks'),
   tasks: document.getElementById('tasks'),
+  habits: document.getElementById('habits'),
   notes: document.getElementById('notes'),
   routines: document.getElementById('routines'),
   widgets: document.getElementById('widgets'),
@@ -142,11 +144,12 @@ async function refreshLayout() {
   show(dom.search, widgets.search);
   show(dom.quicklinks, widgets.quicklinks);
   show(dom.tasks, widgets.tasks);
+  show(dom.habits, widgets.habits);
   show(dom.notes, widgets.notes);
   show(dom.routines, widgets.routines);
   show(dom.weather, widgets.weather);
   show(dom.timer, widgets.timer);
-  show(dom.widgets, widgets.tasks || widgets.notes || widgets.routines);
+  show(dom.widgets, widgets.tasks || widgets.habits || widgets.notes || widgets.routines);
 
   await Promise.all([
     refreshClock(),
@@ -154,6 +157,7 @@ async function refreshLayout() {
     refreshSearch(),
     widgets.quicklinks ? rerenderQuicklinks() : null,
     widgets.tasks ? renderTasks(dom.tasks) : null,
+    widgets.habits ? renderHabits(dom.habits) : null,
     refreshNotes(),
     widgets.routines ? renderRoutines(dom.routines) : null,
     refreshWeather(),

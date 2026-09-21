@@ -916,6 +916,161 @@ body.ready .content {
   color: var(--text-faint);
 }
 
+/* Habits */
+
+.habit-scale {
+  display: grid;
+  grid-template-columns: repeat(7, 13px);
+  gap: 3px;
+  justify-content: end;
+  margin: 0 22px 4px 0;
+}
+
+.habit-scale-day {
+  font-size: 9.5px;
+  color: var(--text-faint);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.habit-scale-day.today {
+  color: var(--text-dim);
+}
+
+.habit-list {
+  list-style: none;
+  max-height: 168px;
+  overflow-y: auto;
+}
+
+.habit {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 4px;
+  border-radius: 8px;
+}
+
+.habit:hover {
+  background: var(--glass-hover);
+}
+
+.habit-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  cursor: text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.habit-edit {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 3px 6px;
+  background: var(--surface-2);
+  font-size: 13px;
+  outline: none;
+}
+
+.habit-dots {
+  display: grid;
+  grid-template-columns: repeat(7, 13px);
+  gap: 3px;
+  flex: none;
+}
+
+.habit-dot {
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.habit-dot:hover {
+  border-color: var(--accent);
+}
+
+.habit-dot.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.habit-dot.today {
+  border-style: dashed;
+}
+
+.habit-dot.today.on {
+  border-style: solid;
+}
+
+.habit-streak {
+  flex: none;
+  min-width: 18px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-faint);
+}
+
+.habit-streak.lit {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.habit-remove {
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.habit:hover .habit-remove {
+  opacity: 1;
+}
+
+.habit-remove:hover {
+  color: var(--danger);
+}
+
+.habit-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.habit-add-plus {
+  color: var(--text-faint);
+  font-size: 14px;
+  padding-left: 3px;
+}
+
+.habit-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  outline: none;
+  padding: 3px 0;
+}
+
+.habit-input::placeholder {
+  color: var(--text-faint);
+}
+
 /* Notes */
 
 .notes-area {

@@ -358,6 +358,7 @@ function widgetsPanel(rerender) {
     ['search', 'Search bar'],
     ['quicklinks', 'Quick links'],
     ['tasks', 'Tasks'],
+    ['habits', 'Habits'],
     ['notes', 'Notes'],
     ['routines', 'Routines'],
     ['weather', 'Weather'],
