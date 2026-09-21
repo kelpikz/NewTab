@@ -184,7 +184,13 @@ function forecastPanel(data, onConfigure) {
   );
 }
 
+// The widget is redrawn whenever the settings change, so the listeners of the
+// last drawing are dropped first.
+let detachPrevious = null;
+
 export async function renderWeather(container, config, { onConfigure } = {}) {
+  detachPrevious?.();
+  detachPrevious = null;
   const { place, units } = config.weather;
   container.replaceChildren();
 
@@ -208,8 +214,13 @@ export async function renderWeather(container, config, { onConfigure } = {}) {
     const panel = forecastPanel(data, onConfigure);
 
     const close = () => container.classList.remove('open');
+    const onEscape = (event) => event.key === 'Escape' && close();
     document.addEventListener('click', close);
-    document.addEventListener('keydown', (event) => event.key === 'Escape' && close());
+    document.addEventListener('keydown', onEscape);
+    detachPrevious = () => {
+      document.removeEventListener('click', close);
+      document.removeEventListener('keydown', onEscape);
+    };
 
     const card = el(
       'button',

@@ -1825,32 +1825,7 @@ body.ready .content {
   color: var(--text);
 }
 
-@media (max-width: 700px) {
-  .content {
-    padding-top: 80px;
-    gap: 20px;
-  }
 
-  .widgets {
-    grid-template-columns: 1fr;
-  }
-
-  .settings-body {
-    grid-template-columns: 1fr;
-    max-height: 74vh;
-  }
-
-  .settings-tabs {
-    flex-direction: row;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .weather-place {
-    display: none;
-  }
-}
 
 /* Add-site suggestions */
 
@@ -2044,4 +2019,38 @@ body.ready .content {
 
 .countdown-date-input:focus {
   border-color: var(--accent);
+}
+
+/* Narrow windows */
+
+@media (max-width: 700px) {
+  .content {
+    padding-top: 80px;
+    gap: 20px;
+  }
+
+  .widgets {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-body {
+    grid-template-columns: 1fr;
+    max-height: 74vh;
+  }
+
+  .settings-tabs {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .weather-place {
+    display: none;
+  }
+
+  .habit-name,
+  .countdown-name {
+    font-size: 13.5px;
+  }
 }
