@@ -1851,3 +1851,197 @@ body.ready .content {
     display: none;
   }
 }
+
+/* Add-site suggestions */
+
+.site-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.site-suggest:empty {
+  display: none;
+}
+
+.site-suggest-label {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.site-suggest-ask {
+  align-self: flex-start;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.site-suggest-ask:hover {
+  border-style: solid;
+  color: var(--text);
+}
+
+.site-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 96px;
+  overflow-y: auto;
+}
+
+.site-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 190px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px 4px 6px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.site-chip:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.site-chip .favicon,
+.site-chip img {
+  width: 14px;
+  height: 14px;
+}
+
+.site-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Countdowns */
+
+.countdown-list {
+  list-style: none;
+  max-height: 168px;
+  overflow-y: auto;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 4px;
+  border-radius: 8px;
+}
+
+.countdown:hover {
+  background: var(--glass-hover);
+}
+
+.countdown-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.countdown-name {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.countdown-date {
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+.countdown-days {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown.now .countdown-days {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.countdown.past .countdown-name {
+  color: var(--text-faint);
+}
+
+.countdown.past .countdown-days {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.countdown-remove {
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.countdown:hover .countdown-remove {
+  opacity: 1;
+}
+
+.countdown-remove:hover {
+  color: var(--danger);
+}
+
+.countdown-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.countdown-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  outline: none;
+  padding: 3px 0;
+}
+
+.countdown-input::placeholder {
+  color: var(--text-faint);
+}
+
+.countdown-date-input {
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 4px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.countdown-date-input:focus {
+  border-color: var(--accent);
+}

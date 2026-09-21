@@ -23,12 +23,13 @@ import { renderDailyFocus } from './focus.js';
 import { renderWeather } from './weather.js';
 import { renderTasks } from './tasks.js';
 import { renderHabits } from './habits.js';
+import { renderCountdowns } from './countdowns.js';
 import { renderNotes } from './notes.js';
 import { renderTimer } from './timer.js';
 import { initPalette, openPalette, reloadEngines } from './palette.js';
 import { initShortcuts } from './shortcuts.js';
-import { el, toast } from './util.js';
-import { currentWindowTabs, requestPermissions } from './platform.js';
+import { el, toast, faviconNode, hostOf } from './util.js';
+import { currentWindowTabs, requestPermissions, hasPermissions, hasApi } from './platform.js';
 
 const dom = {
   background: document.getElementById('background'),
@@ -39,6 +40,7 @@ const dom = {
   quicklinks: document.getElementById('quicklinks'),
   tasks: document.getElementById('tasks'),
   habits: document.getElementById('habits'),
+  countdowns: document.getElementById('countdowns'),
   notes: document.getElementById('notes'),
   routines: document.getElementById('routines'),
   widgets: document.getElementById('widgets'),
@@ -146,11 +148,15 @@ async function refreshLayout() {
   show(dom.quicklinks, widgets.quicklinks);
   show(dom.tasks, widgets.tasks);
   show(dom.habits, widgets.habits);
+  show(dom.countdowns, widgets.countdowns);
   show(dom.notes, widgets.notes);
   show(dom.routines, widgets.routines);
   show(dom.weather, widgets.weather);
   show(dom.timer, widgets.timer);
-  show(dom.widgets, widgets.tasks || widgets.habits || widgets.notes || widgets.routines);
+  show(
+    dom.widgets,
+    widgets.tasks || widgets.habits || widgets.countdowns || widgets.notes || widgets.routines
+  );
 
   await Promise.all([
     refreshClock(),
@@ -159,6 +165,7 @@ async function refreshLayout() {
     widgets.quicklinks ? rerenderQuicklinks() : null,
     widgets.tasks ? renderTasks(dom.tasks) : null,
     widgets.habits ? renderHabits(dom.habits) : null,
+    widgets.countdowns ? renderCountdowns(dom.countdowns) : null,
     refreshNotes(),
     widgets.routines ? renderRoutines(dom.routines) : null,
     refreshWeather(),
@@ -176,6 +183,7 @@ const siteTitle = document.getElementById('add-site-title');
 const siteName = document.getElementById('site-name');
 const siteUrl = document.getElementById('site-url');
 const siteGroup = document.getElementById('site-group');
+const siteSuggest = document.getElementById('site-suggest');
 
 const groupDialog = document.getElementById('group-dialog');
 const groupForm = document.getElementById('group-form');
@@ -187,12 +195,64 @@ let editLinkIndex = null;
 let editLinkGroupId = null;
 let editGroupId = null;
 
+/**
+ * Offer the pages already open, so a new tile needs one click instead of a
+ * name and an address typed by hand.
+ */
+async function fillSiteSuggestions() {
+  siteSuggest.replaceChildren();
+  if (!hasApi('tabs')) return;
+
+  if (!(await hasPermissions(['tabs']))) {
+    siteSuggest.append(
+      el('button', {
+        type: 'button',
+        class: 'site-suggest-ask',
+        text: 'Fill this in from an open tab',
+        onClick: async () => {
+          if (await requestPermissions(['tabs'])) fillSiteSuggestions();
+        },
+      })
+    );
+    return;
+  }
+
+  const tabs = (await currentWindowTabs()).slice(0, 8);
+  if (!tabs.length) return;
+  siteSuggest.append(
+    el('span', { class: 'site-suggest-label', text: 'From an open tab' }),
+    el(
+      'div',
+      { class: 'site-chips' },
+      ...tabs.map((tab) =>
+        el(
+          'button',
+          {
+            type: 'button',
+            class: 'site-chip',
+            title: tab.url,
+            onClick: () => {
+              siteName.value = (tab.title ?? hostOf(tab.url)).slice(0, 40);
+              siteUrl.value = tab.url;
+              siteName.focus();
+            },
+          },
+          faviconNode(tab.url, tab.title, 16),
+          el('span', { class: 'site-chip-text', text: tab.title || hostOf(tab.url) })
+        )
+      )
+    )
+  );
+}
+
 async function openSiteDialog(link = null, index = null, groupId = null) {
   editLinkIndex = index;
   editLinkGroupId = groupId;
   siteTitle.textContent = link ? 'Edit site' : 'Add site';
   siteName.value = link?.name ?? '';
   siteUrl.value = link?.url ?? '';
+  if (link) siteSuggest.replaceChildren();
+  else fillSiteSuggestions();
 
   const groups = await getGroups();
   const target = groupId ?? groups[0]?.id;

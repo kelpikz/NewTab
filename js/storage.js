@@ -8,6 +8,7 @@ const ENGINES_KEY = 'searchEngines';
 const ROUTINES_KEY = 'routines';
 const TASKS_KEY = 'tasks';
 const HABITS_KEY = 'habits';
+const COUNTDOWNS_KEY = 'countdowns';
 const SETTINGS_KEY = 'settings';
 const NOTES_KEY = 'notes';
 const FOCUS_KEY = 'dailyFocus';
@@ -39,6 +40,7 @@ export const DEFAULT_SETTINGS = {
     quicklinks: true,
     tasks: true,
     habits: true,
+    countdowns: true,
     notes: true,
     routines: true,
     weather: true,
@@ -302,6 +304,15 @@ export async function saveHabits(habits) {
   await sync.set({ [HABITS_KEY]: habits });
 }
 
+export async function getCountdowns() {
+  const result = await sync.get(COUNTDOWNS_KEY);
+  return result[COUNTDOWNS_KEY] ?? [];
+}
+
+export async function saveCountdowns(countdowns) {
+  await sync.set({ [COUNTDOWNS_KEY]: countdowns });
+}
+
 export async function getNotes() {
   const result = await local.get(NOTES_KEY);
   return result[NOTES_KEY] ?? '';
@@ -337,7 +348,7 @@ export async function saveUsage(usage) {
 /* Backup                                                              */
 /* ------------------------------------------------------------------ */
 
-const SYNC_KEYS = [SETTINGS_KEY, GROUPS_KEY, ENGINES_KEY, ROUTINES_KEY, TASKS_KEY, HABITS_KEY];
+const SYNC_KEYS = [SETTINGS_KEY, GROUPS_KEY, ENGINES_KEY, ROUTINES_KEY, TASKS_KEY, HABITS_KEY, COUNTDOWNS_KEY];
 const LOCAL_KEYS = [NOTES_KEY, FOCUS_KEY, ACTIVE_GROUP_KEY, USAGE_KEY];
 
 export async function exportData() {

@@ -359,6 +359,7 @@ function widgetsPanel(rerender) {
     ['quicklinks', 'Quick links'],
     ['tasks', 'Tasks'],
     ['habits', 'Habits'],
+    ['countdowns', 'Countdowns'],
     ['notes', 'Notes'],
     ['routines', 'Routines'],
     ['weather', 'Weather'],

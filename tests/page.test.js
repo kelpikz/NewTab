@@ -25,6 +25,7 @@ describe('new tab page', { skip }, () => {
     assert.equal(page.$$('.ql-grid .quicklink').length, 5, 'four links plus the add tile');
     assert.ok(page.$('.task-input'), 'task input');
     assert.ok(page.$('.habit-input'), 'habit input');
+    assert.ok(page.$('.countdown-input'), 'countdown input');
     assert.ok(page.$('.notes-area'), 'notes');
     assert.equal(page.$$('#routines .rw-row').length, 2);
     assert.equal(page.text('.timer-time'), '25:00');
@@ -67,6 +68,25 @@ describe('new tab page', { skip }, () => {
 
     await page.click('.habit-remove');
     assert.equal(page.$$('.habit').length, 0);
+  });
+
+  test('adds a countdown and says how far off it is', async () => {
+    const name = page.$('.countdown-input');
+    const date = page.$('.countdown-date-input');
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 3);
+    const pad = (value) => String(value).padStart(2, '0');
+    name.value = 'Trip';
+    // Built from the local parts: toISOString() would shift the day.
+    date.value = `${soon.getFullYear()}-${pad(soon.getMonth() + 1)}-${pad(soon.getDate())}`;
+    await page.press('Enter', { target: '.countdown-input' });
+
+    assert.equal(page.$$('.countdown').length, 1);
+    assert.equal(page.text('.countdown-name'), 'Trip');
+    assert.equal(page.text('.countdown-days'), 'in 3 days');
+
+    await page.click('.countdown-remove');
+    assert.equal(page.$$('.countdown').length, 0);
   });
 
   test('saves notes while typing', async () => {
