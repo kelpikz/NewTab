@@ -6,7 +6,11 @@
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["storage", "unlimitedStorage", "favicon"],
+  "permissions": ["storage", "unlimitedStorage", "favicon", "alarms"],
+  "background": {
+    "service_worker": "worker.js",
+    "type": "module"
+  },
   "optional_permissions": ["tabs", "bookmarks", "history", "topSites"],
   "host_permissions": [
     "https://picsum.photos/*",

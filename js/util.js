@@ -118,9 +118,8 @@ export function faviconNode(url, label = '', size = 32) {
   return wrap;
 }
 
-export function todayKey(date = new Date()) {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
-}
+// One definition of "today", shared with the background worker.
+export { dayKey as todayKey } from './timelog.js';
 
 let toastTimer = null;
 

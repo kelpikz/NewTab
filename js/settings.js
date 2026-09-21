@@ -13,6 +13,7 @@ import { GRADIENTS, setCustomImage, clearCustomImage, getCustomImage } from './b
 import { geocode } from './weather.js';
 import { OPTIONAL_SOURCES } from './omni.js';
 import { clearUsage } from './frecency.js';
+import { clearVisitLog } from './screentime.js';
 import { hasPermissions, requestPermissions, removePermissions, hasApi } from './platform.js';
 
 const ACCENTS = ['#7c9cff', '#5ad2a0', '#ffb454', '#ff7b8a', '#c792ea', '#4dd0e1', '#e0e0e0'];
@@ -352,6 +353,115 @@ function weatherSection(rerender) {
   );
 }
 
+
+function mindfulSection(rerender) {
+  const config = settings().mindful;
+  const sites = config.sites ?? [];
+
+  const siteRows = sites.map((site) =>
+    el(
+      'div',
+      { class: 'watch-row' },
+      el('span', { class: 'watch-host', text: site.host }),
+      el(
+        'label',
+        { class: 'watch-limit' },
+        el('span', { text: 'visits' }),
+        textInput({
+          type: 'number',
+          value: String(site.limitVisits || ''),
+          placeholder: '–',
+          label: `Daily visit limit for ${site.host}`,
+          onInput: debounce((value) => {
+            site.limitVisits = Math.max(0, Number(value) || 0);
+            set({ mindful: { sites } }, actions.refreshLayout);
+          }, 500),
+        })
+      ),
+      el(
+        'label',
+        { class: 'watch-limit' },
+        el('span', { text: 'minutes' }),
+        textInput({
+          type: 'number',
+          value: String(site.limitMinutes || ''),
+          placeholder: '–',
+          label: `Daily minute limit for ${site.host}`,
+          onInput: debounce((value) => {
+            site.limitMinutes = Math.max(0, Number(value) || 0);
+            set({ mindful: { sites } }, actions.refreshLayout);
+          }, 500),
+        })
+      ),
+      button(
+        'Remove',
+        () =>
+          set({ mindful: { sites: sites.filter((item) => item.host !== site.host) } }, () => {
+            actions.refreshLayout?.();
+            rerender();
+          }),
+        'danger'
+      )
+    )
+  );
+
+  return section(
+    'Time',
+    el('p', {
+      class: 'set-hint',
+      text: 'A watched site waits a few seconds before it opens, and says how often you have been there today.',
+    }),
+    row(
+      'Pause watched sites',
+      toggle(
+        config.enabled,
+        (on) => set({ mindful: { enabled: on } }, actions.refreshLayout),
+        'Pause watched sites'
+      )
+    ),
+    row(
+      'Seconds to wait',
+      slider({
+        value: config.pause,
+        min: 0,
+        max: 20,
+        label: 'Seconds to wait',
+        format: (value) => `${value}s`,
+        onInput: debounce((value) => set({ mindful: { pause: value } }), 400),
+      })
+    ),
+    row(
+      'Count the minutes',
+      toggle(
+        config.track,
+        async (on) => {
+          if (on && !(await requestPermissions(['tabs']))) {
+            toast('Chrome did not allow tab access.');
+            rerender();
+            return;
+          }
+          await set({ mindful: { track: on } }, actions.refreshLayout);
+          toast(on ? 'Minutes are counted from now on.' : 'Minutes are no longer counted.');
+        },
+        'Count the minutes'
+      ),
+      'Needs the tabs permission. Only watched sites are ever counted.'
+    ),
+    ...(siteRows.length
+      ? [el('p', { class: 'set-hint', text: 'Leave a limit empty for no limit.' }), ...siteRows]
+      : [el('p', { class: 'set-hint', text: 'Add sites from the Time widget.' })]),
+    row(
+      'Forget the tally',
+      button('Clear what was counted', async () => {
+        await clearVisitLog();
+        actions.refreshLayout?.();
+        toast('The tally starts over.');
+      }),
+      'Visits and minutes so far'
+    )
+  );
+}
+
 function widgetsPanel(rerender) {
   const config = settings();
   const items = [
@@ -394,6 +504,7 @@ function widgetsPanel(rerender) {
       )
     ),
     weatherSection(rerender),
+    mindfulSection(rerender),
     section(
       'Focus timer',
       row(

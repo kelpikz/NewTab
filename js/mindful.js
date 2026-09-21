@@ -2,11 +2,23 @@
 // before they open, with the count for today, so the visit is a choice and
 // not a reflex. Everything is counted on this device only.
 
-import { settings } from './storage.js';
-import { getVisitLog, saveVisitLog } from './storage.js';
-import { el, hostOf, todayKey } from './util.js';
+import { settings, getVisitLog, saveVisitLog } from './storage.js';
+import { el, hostOf } from './util.js';
+import { addVisit, limitState, matchHost, ordinal, statsFor, formatMinutes } from './timelog.js';
 
-const KEEP_DAYS = 60;
+export {
+  addSeconds,
+  addVisit,
+  dayKey,
+  formatMinutes,
+  limitState,
+  matchHost,
+  normalizeHost,
+  ordinal,
+  prune,
+  statsFor,
+  trend,
+} from './timelog.js';
 
 const QUESTIONS = [
   'What do you want from this visit?',
@@ -16,100 +28,13 @@ const QUESTIONS = [
   'Will this still matter in an hour?',
 ];
 
-/* ------------------------------------------------------------------ */
-/* The watch list                                                      */
-/* ------------------------------------------------------------------ */
-
-/** "https://www.YouTube.com/feed" and "youtube.com" both give "youtube.com". */
-export function normalizeHost(value) {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/^[a-z]+:\/\//, '')
-    .split('/')[0]
-    .split('?')[0]
-    .replace(/^www\./, '')
-    .replace(/:\d+$/, '');
-}
-
 /** The watched site an address belongs to, or `null`. Subdomains count. */
 export function watchedFor(url, sites = []) {
-  const host = normalizeHost(hostOf(url) || url);
-  if (!host) return null;
-  return sites.find((site) => host === site.host || host.endsWith(`.${site.host}`)) ?? null;
-}
-
-/* ------------------------------------------------------------------ */
-/* The tally                                                           */
-/* ------------------------------------------------------------------ */
-
-const EMPTY = { visits: 0, seconds: 0 };
-
-/** What one site added up to on one day. */
-export function statsFor(log, host, day = todayKey()) {
-  return { ...EMPTY, ...(log?.[day]?.[host] ?? {}) };
-}
-
-/** Count one more visit. Returns the new log; old days are dropped. */
-export function addVisit(log, host, day = todayKey(), keep = KEEP_DAYS) {
-  const next = { ...log, [day]: { ...(log?.[day] ?? {}) } };
-  const entry = { ...EMPTY, ...(next[day][host] ?? {}) };
-  next[day][host] = { ...entry, visits: entry.visits + 1 };
-  return prune(next, keep);
-}
-
-/** Add watched seconds to a day, as counted by the background worker. */
-export function addSeconds(log, host, seconds, day = todayKey(), keep = KEEP_DAYS) {
-  if (!seconds) return log;
-  const next = { ...log, [day]: { ...(log?.[day] ?? {}) } };
-  const entry = { ...EMPTY, ...(next[day][host] ?? {}) };
-  next[day][host] = { ...entry, seconds: Math.round(entry.seconds + seconds) };
-  return prune(next, keep);
-}
-
-export function prune(log, keep = KEEP_DAYS) {
-  const days = Object.keys(log).sort();
-  if (days.length <= keep) return log;
-  return Object.fromEntries(days.slice(-keep).map((day) => [day, log[day]]));
-}
-
-/** The last `count` days for one site, oldest first. */
-export function trend(log, host, count = 7, from = new Date()) {
-  const days = [];
-  for (let i = count - 1; i >= 0; i -= 1) {
-    const date = new Date(from);
-    date.setDate(date.getDate() - i);
-    const day = todayKey(date);
-    days.push({ day, ...statsFor(log, host, day) });
-  }
-  return days;
-}
-
-/** How today compares with the limit you set: ok, near or over. */
-export function limitState(stats, site) {
-  const checks = [
-    [site?.limitVisits, stats.visits],
-    [site?.limitMinutes, stats.seconds / 60],
-  ].filter(([limit]) => Number(limit) > 0);
-  if (!checks.length) return 'ok';
-  if (checks.some(([limit, value]) => value >= limit)) return 'over';
-  if (checks.some(([limit, value]) => value >= limit * 0.7)) return 'near';
-  return 'ok';
-}
-
-/** "42m", "1h 12m", or "" when nothing has been counted. */
-export function formatMinutes(seconds) {
-  const total = Math.round((seconds ?? 0) / 60);
-  if (!total) return '';
-  if (total < 60) return `${total}m`;
-  return `${Math.floor(total / 60)}h ${String(total % 60).padStart(2, '0')}m`;
-}
-
-/** "1st", "2nd", "3rd", "4th"… */
-export function ordinal(n) {
-  const tens = n % 100;
-  if (tens >= 11 && tens <= 13) return `${n}th`;
-  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+  const host = matchHost(
+    hostOf(url) || url,
+    sites.map((site) => site.host)
+  );
+  return sites.find((site) => site.host === host) ?? null;
 }
 
 /** The line under the host name on the pause screen. */
@@ -131,9 +56,8 @@ export function pauseScreen(site, stats, { pause = 5, question } = {}) {
     openPause?.();
 
     let left = Math.max(0, Number(pause) || 0);
-    const ring = el('div', { class: 'mind-ring' });
     const count = el('span', { class: 'mind-count', text: left ? String(left) : '' });
-    ring.append(count);
+    const ring = el('div', { class: 'mind-ring' }, count);
 
     const go = el('button', {
       type: 'button',
@@ -151,12 +75,12 @@ export function pauseScreen(site, stats, { pause = 5, question } = {}) {
     });
 
     const state = limitState(stats, site);
-    const limitLine =
-      state === 'over' && site.limitVisits
-        ? `You set yourself ${site.limitVisits} a day.`
-        : state === 'over' && site.limitMinutes
-          ? `You set yourself ${site.limitMinutes} minutes a day.`
-          : '';
+    let limitLine = '';
+    if (state === 'over' && site.limitVisits) {
+      limitLine = `You set yourself ${site.limitVisits} a day.`;
+    } else if (state === 'over' && site.limitMinutes) {
+      limitLine = `You set yourself ${site.limitMinutes} minutes a day.`;
+    }
 
     const panel = el(
       'div',
@@ -165,7 +89,10 @@ export function pauseScreen(site, stats, { pause = 5, question } = {}) {
       el('h2', { class: 'mind-host', text: site.host }),
       el('p', { class: 'mind-sum', text: pauseSummary(stats) }),
       limitLine ? el('p', { class: 'mind-limit', text: limitLine }) : null,
-      el('p', { class: 'mind-question', text: question ?? QUESTIONS[stats.visits % QUESTIONS.length] }),
+      el('p', {
+        class: 'mind-question',
+        text: question ?? QUESTIONS[stats.visits % QUESTIONS.length],
+      }),
       el('div', { class: 'mind-actions' }, stay, go)
     );
 

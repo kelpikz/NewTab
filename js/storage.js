@@ -53,7 +53,7 @@ export const DEFAULT_SETTINGS = {
   weather: { place: null, units: 'metric' },
   // Sites you want to think twice about. Times are per device, so the list
   // syncs but the tally does not.
-  mindful: { enabled: true, pause: 5, sites: [] },
+  mindful: { enabled: true, pause: 5, track: false, sites: [] },
   timer: { focusMin: 25, breakMin: 5, chime: true },
 };
 

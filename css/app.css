@@ -2345,3 +2345,36 @@ body.ready .content {
   opacity: 0.5;
   cursor: default;
 }
+
+/* Watch list rows in the settings dialog */
+
+.watch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+}
+
+.watch-host {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watch-limit {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.watch-limit .set-input {
+  width: 54px;
+  padding: 4px 6px;
+  text-align: right;
+}

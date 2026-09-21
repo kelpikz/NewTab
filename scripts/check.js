@@ -68,6 +68,32 @@ js.forEach(({ name, source }) => {
   });
 });
 
+/* 5. The background worker stays free of the DOM ------------------- */
+
+// A service worker has no document. Whatever it imports, and whatever that
+// imports in turn, has to keep away from the page.
+const DOM_WORDS = ['document.', 'window.', 'localStorage', 'requestAnimationFrame'];
+const workerPath = manifest.background?.service_worker;
+if (workerPath) {
+  if (!existsSync(join(root, workerPath))) {
+    problems.push(`manifest: background worker ${workerPath} is missing`);
+  } else {
+    const seen = new Set();
+    const walk = (path) => {
+      if (seen.has(path) || !existsSync(join(root, path))) return;
+      seen.add(path);
+      const source = read(path);
+      const dom = path === workerPath ? null : DOM_WORDS.find((word) => source.includes(word));
+      if (dom) problems.push(`${workerPath} reaches ${path}, which uses ${dom}`);
+      collect(source, /from\s+'(\.[^']+)'/g).forEach((ref) => {
+        const base = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '.';
+        walk(join(base, ref).replaceAll('\\', '/'));
+      });
+    };
+    walk(workerPath);
+  }
+}
+
 /* ----------------------------------------------------------------- */
 
 if (problems.length) {
