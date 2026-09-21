@@ -19,6 +19,9 @@ describe('new tab page', { skip }, () => {
   const openWidget = (label) =>
     page.click(page.$$('.widget-tab').find((tab) => tab.textContent === label));
 
+  const holder = (key) => page.$(`.widget-holder[data-widget="${key}"]`);
+  const shown = (key) => holder(key).hidden === false;
+
   test('renders every widget', () => {
     assert.match(page.text('.clock-time'), /^\d{2}:\d{2}$/);
     assert.match(page.text('.clock-line'), /Good (morning|afternoon|evening|night)/);
@@ -56,7 +59,7 @@ describe('new tab page', { skip }, () => {
 
   test('adds a habit, ticks today and counts the run', async () => {
     await openWidget('Habits');
-    assert.equal(page.$('#habits').hidden, false);
+    assert.equal(shown('habits'), true);
     const input = page.$('.habit-input');
     input.value = 'Read';
     await page.press('Enter', { target: '.habit-input' });
@@ -102,21 +105,21 @@ describe('new tab page', { skip }, () => {
       page.$$('.widget-tab').map((tab) => tab.textContent),
       ['Tasks', 'Habits', 'Countdowns', 'Time', 'Calendar', 'Notes', 'Routines']
     );
-    assert.equal(page.$$('.widget-slot:not([hidden])').length, 1);
+    assert.equal(page.$$('.widget-holder:not([hidden])').length, 1);
 
     await openWidget('Notes');
-    assert.equal(page.$('#notes').hidden, false);
-    assert.equal(page.$('#tasks').hidden, true);
+    assert.equal(shown('notes'), true);
+    assert.equal(shown('tasks'), false);
     assert.equal(page.$$('.widget-tab.active')[0].textContent, 'Notes');
 
     // "W" steps to the next tab; "T" jumps straight back to the tasks card.
     await page.press('w');
-    assert.equal(page.$('#routines').hidden, false);
+    assert.equal(shown('routines'), true);
     await page.press('w');
-    assert.equal(page.$('#tasks').hidden, false, 'the tabs wrap around');
+    assert.equal(shown('tasks'), true, 'the tabs wrap around');
     await page.press('t');
     await page.press('t');
-    assert.equal(page.$('#tasks').hidden, false);
+    assert.equal(shown('tasks'), true);
   });
 
   test('a watched site pauses before it opens', async () => {
@@ -143,6 +146,27 @@ describe('new tab page', { skip }, () => {
 
     await page.click('.st-remove');
     await page.wait(150);
+  });
+
+  test('a card can be dragged into a rail and back', async () => {
+    assert.equal(page.$('#rail-right').hidden, true, 'a rail with nothing in it is not shown');
+
+    await page.drag(holder('calendar'), '#rail-right');
+    assert.ok(page.$('#rail-right').contains(holder('calendar')), 'the card moved');
+    assert.equal(page.$('#rail-right').hidden, false);
+    assert.equal(shown('calendar'), true, 'a card in a rail is always on show');
+    assert.ok(
+      !page.$$('.widget-tab').some((tab) => tab.textContent === 'Calendar'),
+      'it no longer needs a tab'
+    );
+
+    const stored = JSON.parse(page.window.localStorage.getItem('newtab:sync:settings'));
+    assert.equal(stored.widgetPlacement.calendar, 'right');
+
+    await page.drag(holder('calendar'), '#widgets');
+    assert.ok(page.$('#widgets').contains(holder('calendar')), 'and back to the middle');
+    assert.equal(page.$('#rail-right').hidden, true);
+    await openWidget('Tasks');
   });
 
   test('saves notes while typing', async () => {
@@ -265,21 +289,27 @@ describe('new tab page', { skip }, () => {
     assert.equal(page.document.documentElement.dataset.theme, 'light');
 
     await page.click(page.$$('.set-tab').find((tab) => tab.textContent === 'Widgets'));
-    // The first select in this panel is the layout; the grid shows every card.
-    await page.change('#settings-panel .set-select', 'grid');
+    const settingRow = (label) =>
+      page.$$('.set-row').find((r) => r.textContent.startsWith(label));
+    // "All at once" lays every card out, so the tabs are not needed.
+    await page.change(settingRow('Widget layout').querySelector('select'), 'grid');
     assert.equal(page.$('#widget-tabs').hidden, true);
-    const notesToggle = page.$$('.set-row').find((r) => r.textContent.startsWith('Notes'));
+    const notesToggle = settingRow('Notes');
     await page.click(notesToggle.querySelector('input'));
     await page.wait(200);
-    assert.equal(page.$('#notes').hidden, true);
-    assert.equal(page.displayOf('#notes'), 'none', 'hidden must beat the author display rule');
+    assert.equal(shown('notes'), false);
+    assert.equal(
+      page.window.getComputedStyle(holder('notes')).display,
+      'none',
+      'hidden must beat the author display rule'
+    );
 
     await page.click(notesToggle.querySelector('input'));
     await page.wait(200);
-    assert.equal(page.$('#notes').hidden, false);
-    assert.notEqual(page.displayOf('#notes'), 'none');
+    assert.equal(shown('notes'), true);
+    assert.notEqual(page.window.getComputedStyle(holder('notes')).display, 'none');
 
-    await page.change('#settings-panel .set-select', 'deck');
+    await page.change(settingRow('Widget layout').querySelector('select'), 'deck');
     await page.wait(200);
     assert.equal(page.$('#widget-tabs').hidden, false);
     await page.click('#close-settings');

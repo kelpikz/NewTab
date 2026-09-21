@@ -16,6 +16,7 @@ import { clearUsage } from './frecency.js';
 import { clearVisitLog } from './screentime.js';
 import { getCalendarFeed, saveCalendarFeed } from './storage.js';
 import { normalizeFeedUrl } from './calendar.js';
+import { LABELS, WIDGET_KEYS, placeWidget } from './layout.js';
 import { hasPermissions, requestPermissions, removePermissions, hasApi } from './platform.js';
 
 const ACCENTS = ['#7c9cff', '#5ad2a0', '#ffb454', '#ff7b8a', '#c792ea', '#4dd0e1', '#e0e0e0'];
@@ -504,23 +505,52 @@ function calendarSection(rerender) {
   );
 }
 
+/** One card: turn it on or off, and say which side of the page it sits on. */
+function cardRow(config, key) {
+  const on = config.widgets[key];
+  const zone = config.widgetPlacement?.[key] ?? 'deck';
+  return row(
+    LABELS[key] ?? key,
+    el(
+      'div',
+      { class: 'set-pair' },
+      select(
+        [
+          ['left', 'Left'],
+          ['deck', 'Middle'],
+          ['right', 'Right'],
+        ],
+        zone,
+        (value) =>
+          set(
+            { widgetPlacement: placeWidget(config.widgetPlacement ?? {}, key, value) },
+            actions.refreshLayout
+          ),
+        `Where ${LABELS[key] ?? key} sits`
+      ),
+      toggle(on, (next) => set({ widgets: { [key]: next } }, actions.refreshLayout), LABELS[key])
+    )
+  );
+}
+
 function widgetsPanel(rerender) {
   const config = settings();
   const items = [
     ['search', 'Search bar'],
     ['quicklinks', 'Quick links'],
-    ['tasks', 'Tasks'],
-    ['habits', 'Habits'],
-    ['countdowns', 'Countdowns'],
-    ['mindful', 'Time'],
-    ['calendar', 'Calendar'],
-    ['notes', 'Notes'],
-    ['routines', 'Routines'],
     ['weather', 'Weather'],
     ['timer', 'Focus timer'],
   ];
 
   return [
+    section(
+      'Cards',
+      el('p', {
+        class: 'set-hint',
+        text: 'Drag a card by the grip in its corner, or set its side here. A narrow window keeps every card in the middle.',
+      }),
+      ...WIDGET_KEYS.map((key) => cardRow(config, key))
+    ),
     section(
       'Layout',
       row(
@@ -538,7 +568,7 @@ function widgetsPanel(rerender) {
       )
     ),
     section(
-      'Show or hide',
+      'Other parts of the page',
       ...items.map(([key, label]) =>
         row(
           label,

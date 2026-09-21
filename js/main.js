@@ -34,8 +34,16 @@ import { renderNotes } from './notes.js';
 import { renderTimer } from './timer.js';
 import { initPalette, openPalette, reloadEngines } from './palette.js';
 import { initShortcuts } from './shortcuts.js';
-import { applyDeck, cycleWidget, showWidget } from './deck.js';
-import { el, toast, faviconNode, hostOf, asUrl } from './util.js';
+import {
+  applyLayout,
+  cycleWidget,
+  initLayout,
+  showWidget,
+  WIDGET_KEYS,
+  placeWidget,
+  reorder,
+} from './layout.js';
+import { el, toast, faviconNode, hostOf, asUrl, debounce } from './util.js';
 import { answer } from './answers.js';
 import { currentWindowTabs, requestPermissions, hasPermissions, hasApi } from './platform.js';
 
@@ -55,6 +63,8 @@ const dom = {
   routines: document.getElementById('routines'),
   widgets: document.getElementById('widgets'),
   widgetTabs: document.getElementById('widget-tabs'),
+  railLeft: document.getElementById('rail-left'),
+  railRight: document.getElementById('rail-right'),
   weather: document.getElementById('weather'),
   timer: document.getElementById('timer'),
 };
@@ -159,17 +169,7 @@ async function refreshLayout() {
   show(dom.quicklinks, widgets.quicklinks);
   show(dom.weather, widgets.weather);
   show(dom.timer, widgets.timer);
-  show(
-    dom.widgets,
-    widgets.tasks ||
-      widgets.habits ||
-      widgets.countdowns ||
-      widgets.mindful ||
-      widgets.calendar ||
-      widgets.notes ||
-      widgets.routines
-  );
-  dom.widgets.classList.toggle('deck', settings().widgetLayout === 'deck');
+  show(dom.widgets, WIDGET_KEYS.some((key) => widgets[key]));
 
   await Promise.all([
     refreshClock(),
@@ -187,20 +187,13 @@ async function refreshLayout() {
     refreshTimer(),
   ]);
 
-  // The deck decides which cards are on show, so it runs after they are drawn.
-  await applyDeck({
-    tabsEl: dom.widgetTabs,
-    slots: {
-      tasks: dom.tasks,
-      habits: dom.habits,
-      countdowns: dom.countdowns,
-      mindful: dom.mindful,
-      calendar: dom.calendar,
-      notes: dom.notes,
-      routines: dom.routines,
-    },
+  // The layout decides where each card sits, so it runs after they are drawn.
+  const config = settings();
+  await applyLayout({
     widgets,
-    layout: settings().widgetLayout,
+    order: config.widgetOrder,
+    placement: config.widgetPlacement,
+    layout: config.widgetLayout,
   });
 }
 
@@ -488,6 +481,31 @@ async function start() {
     .addEventListener('change', () => settings().theme === 'auto' && applyTheme());
 
   refreshBackground();
+
+  initLayout({
+    tabsEl: dom.widgetTabs,
+    centreEl: dom.widgets,
+    railLeft: dom.railLeft,
+    railRight: dom.railRight,
+    holders: Object.fromEntries(
+      WIDGET_KEYS.map((key) => [key, document.querySelector(`.widget-holder[data-widget="${key}"]`)])
+    ),
+    onArrange: async ({ key, zone, before }) => {
+      const config = settings();
+      await updateSettings({
+        widgetPlacement: placeWidget(config.widgetPlacement, key, zone),
+        widgetOrder: reorder(config.widgetOrder, key, before),
+      });
+      await refreshLayout();
+      showWidget(key);
+    },
+  });
+
+  // Rails need room, so a resize can send their cards back to the middle.
+  window.addEventListener(
+    'resize',
+    debounce(() => refreshLayout(), 200)
+  );
 
   initRoutineDialog(() => renderRoutines(dom.routines));
   onVisitCounted(() => settings().widgets.mindful && renderScreenTime(dom.mindful));

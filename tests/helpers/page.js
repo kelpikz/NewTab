@@ -52,6 +52,8 @@ export async function loadPage({ fetchImpl, seed } = {}) {
   };
 
   window.Element.prototype.scrollIntoView ??= function () {};
+  // jsdom opens a 1024px window; a desktop is wider, and the rails need room.
+  Object.defineProperty(window, 'innerWidth', { value: 1600, configurable: true });
   window.matchMedia ??= () => ({ matches: false, addEventListener() {} });
   window.HTMLDialogElement.prototype.showModal ??= function () {
     this.open = true;
@@ -145,8 +147,34 @@ export async function loadPage({ fetchImpl, seed } = {}) {
       node.dispatchEvent(new window.Event('input', { bubbles: true }));
       await wait(250);
     },
+    /** A drag and drop, with the DataTransfer jsdom does not carry. */
+    async drag(fromSelector, toSelector) {
+      const from = typeof fromSelector === 'string' ? $(fromSelector) : fromSelector;
+      const to = typeof toSelector === 'string' ? $(toSelector) : toSelector;
+      const held = new Map();
+      const dataTransfer = {
+        effectAllowed: '',
+        dropEffect: '',
+        setData: (key, value) => held.set(key, String(value)),
+        getData: (key) => held.get(key) ?? '',
+      };
+      const fire = (node, type) => {
+        const event = new window.Event(type, { bubbles: true, cancelable: true });
+        event.dataTransfer = dataTransfer;
+        node.dispatchEvent(event);
+      };
+      from
+        .querySelector('.widget-grip')
+        ?.dispatchEvent(new window.MouseEvent('mousedown', { bubbles: true }));
+      fire(from, 'dragstart');
+      fire(to, 'dragover');
+      fire(to, 'drop');
+      fire(from, 'dragend');
+      await wait(250);
+    },
+
     change(selector, value) {
-      const node = $(selector);
+      const node = typeof selector === 'string' ? $(selector) : selector;
       node.value = value;
       node.dispatchEvent(new window.Event('change', { bubbles: true }));
       return wait(200);

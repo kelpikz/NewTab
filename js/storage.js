@@ -38,7 +38,9 @@ export const DEFAULT_SETTINGS = {
     blur: 0,
     refresh: 'hourly', // tab | hourly | daily | never
   },
-  widgetLayout: 'deck', // deck | grid
+  widgetLayout: 'deck', // deck | grid, for the middle of the page
+  widgetOrder: [], // the order cards sit in; empty means the order they ship
+  widgetPlacement: {}, // widget -> left | deck | right
   widgets: {
     clock: true,
     focus: true,

@@ -904,7 +904,7 @@ body.ready .content {
   color: var(--accent-ink);
 }
 
-.widgets.deck .widget-slot {
+.widgets.deck .widget-holder {
   width: 100%;
 }
 
@@ -2524,4 +2524,110 @@ body.ready .content {
 .set-buttons {
   display: flex;
   gap: 8px;
+}
+
+/* Rails: the space either side of the middle */
+
+.rail {
+  position: fixed;
+  top: 68px;
+  bottom: 34px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 300px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.rail-left {
+  left: 22px;
+}
+
+.rail-right {
+  right: 22px;
+}
+
+.rail[hidden] {
+  display: none;
+}
+
+/* A card and the grip you drag it by */
+
+.widget-holder {
+  position: relative;
+}
+
+.widget-holder[hidden] {
+  display: none;
+}
+
+.widget-grip {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 2;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.widget-holder:hover .widget-grip,
+.widget-grip:focus-visible {
+  opacity: 1;
+}
+
+.widget-grip:hover {
+  color: var(--text);
+  background: var(--glass-hover);
+}
+
+.widget-holder.dragging {
+  opacity: 0.45;
+}
+
+/* While a card is being dragged, every place it can land shows itself. */
+
+body.arranging .rail {
+  display: flex;
+}
+
+body.arranging .rail::after {
+  content: 'Drop here';
+  order: 99;
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+body.arranging .rail[hidden] {
+  display: flex;
+}
+
+.drop-into {
+  outline: 2px dashed var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-lg);
+}
+
+.set-pair {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }

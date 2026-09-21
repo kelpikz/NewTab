@@ -21,6 +21,9 @@
     </div>
   </header>
 
+  <aside id="rail-left" class="rail rail-left" aria-label="Left widgets"></aside>
+  <aside id="rail-right" class="rail rail-right" aria-label="Right widgets"></aside>
+
   <main class="content">
     <section id="clock" class="clock"></section>
     <section id="daily-focus" class="daily-focus"></section>
@@ -28,13 +31,34 @@
     <nav id="quicklinks" class="quicklinks"></nav>
     <section id="widgets" class="widgets">
       <div id="widget-tabs" class="widget-tabs" role="tablist" aria-label="Widgets"></div>
-      <div id="tasks" class="widget-slot"></div>
-      <div id="habits" class="widget-slot"></div>
-      <div id="countdowns" class="widget-slot"></div>
-      <div id="mindful" class="widget-slot"></div>
-      <div id="calendar" class="widget-slot"></div>
-      <div id="notes" class="widget-slot"></div>
-      <div id="routines" class="widget-slot"></div>
+      <div class="widget-holder" data-widget="tasks">
+        <button type="button" class="widget-grip" title="Drag to move Tasks" aria-label="Move Tasks">⠿</button>
+        <div id="tasks" class="widget-slot"></div>
+      </div>
+      <div class="widget-holder" data-widget="habits">
+        <button type="button" class="widget-grip" title="Drag to move Habits" aria-label="Move Habits">⠿</button>
+        <div id="habits" class="widget-slot"></div>
+      </div>
+      <div class="widget-holder" data-widget="countdowns">
+        <button type="button" class="widget-grip" title="Drag to move Countdowns" aria-label="Move Countdowns">⠿</button>
+        <div id="countdowns" class="widget-slot"></div>
+      </div>
+      <div class="widget-holder" data-widget="mindful">
+        <button type="button" class="widget-grip" title="Drag to move Time" aria-label="Move Time">⠿</button>
+        <div id="mindful" class="widget-slot"></div>
+      </div>
+      <div class="widget-holder" data-widget="calendar">
+        <button type="button" class="widget-grip" title="Drag to move Calendar" aria-label="Move Calendar">⠿</button>
+        <div id="calendar" class="widget-slot"></div>
+      </div>
+      <div class="widget-holder" data-widget="notes">
+        <button type="button" class="widget-grip" title="Drag to move Notes" aria-label="Move Notes">⠿</button>
+        <div id="notes" class="widget-slot"></div>
+      </div>
+      <div class="widget-holder" data-widget="routines">
+        <button type="button" class="widget-grip" title="Drag to move Routines" aria-label="Move Routines">⠿</button>
+        <div id="routines" class="widget-slot"></div>
+      </div>
     </section>
   </main>
 
