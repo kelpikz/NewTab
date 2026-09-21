@@ -1,5 +1,6 @@
 import { getEngines } from './storage.js';
-import { el, faviconNode, debounce, asUrl } from './util.js';
+import { el, faviconNode, debounce, asUrl, copyText, toast } from './util.js';
+import { answer } from './answers.js';
 import { buildSearchUrl, parsePrefix, engineIconNode } from './engines.js';
 import { search as omniSearch } from './omni.js';
 import { activate } from './actions.js';
@@ -7,6 +8,7 @@ import { activate } from './actions.js';
 const MAX_SUGGESTIONS = 7;
 
 function suggestIcon(item) {
+  if (item.glyph) return el('span', { class: 'suggest-icon pal-glyph', text: item.glyph });
   if (item.type === 'routine') return el('span', { class: 'suggest-icon pal-glyph', text: '▶' });
   const node = faviconNode(item.url ?? '', item.title, 32);
   node.classList.add('suggest-icon');
@@ -139,8 +141,9 @@ export async function renderSearchBar(container) {
       closeList();
       return;
     }
-    const results = await omniSearch(text, { limit: MAX_SUGGESTIONS });
+    const found = await omniSearch(text, { limit: MAX_SUGGESTIONS });
     if (current !== token) return;
+    const results = [...answerSuggestion(text), ...found].slice(0, MAX_SUGGESTIONS);
     suggestions = results;
     cursor = -1;
     if (!results.length) {
@@ -212,9 +215,28 @@ export async function renderSearchBar(container) {
   return { focus: () => input.focus() };
 }
 
+/** A sum or a conversion, worked out on this device and offered first. */
+function answerSuggestion(query) {
+  const result = answer(query);
+  if (!result) return [];
+  return [
+    {
+      type: 'answer',
+      glyph: '=',
+      title: result.title,
+      subtitle: result.detail,
+      run: async () => {
+        const ok = await copyText(result.value);
+        toast(ok ? `Copied ${result.value}` : 'Could not copy.');
+      },
+    },
+  ];
+}
+
 function kindLabel(type) {
   return (
     {
+      answer: 'copy',
       tab: 'tab',
       bookmark: 'bookmark',
       history: 'history',

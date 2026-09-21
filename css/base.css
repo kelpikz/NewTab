@@ -44,6 +44,7 @@
   --bg-blur: 0px;
 
   --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 }
 
 :root[data-theme='light'] {

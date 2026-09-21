@@ -1,0 +1,101 @@
+# AGENTS.md
+
+Guide for coding agents working in this repository. Read this before you
+change anything.
+
+## What this is
+
+A Chrome (MV3) new tab replacement. Plain ES modules, no framework, no build
+step — Chrome loads `js/*.js` straight from disk. The only dependency is
+`jsdom`, and only the page tests use it.
+
+## Commands
+
+```bash
+npm test       # unit tests plus a jsdom run of the whole page
+npm run check  # static checks; run this as well as the tests
+```
+
+Both must pass before you commit. `npm test` also works without
+`npm install`: the page tests skip themselves when jsdom is missing.
+
+Do not start a dev server. There is nothing to serve — load the folder at
+`chrome://extensions` with **Load unpacked** to try it by hand.
+
+## Layout
+
+| Path | Holds |
+| --- | --- |
+| `manifest.json` | MV3 manifest |
+| `newtab.html` | All markup, including every `<dialog>` |
+| `css/base.css` | Design tokens, reset, buttons, dialogs |
+| `css/app.css` | Layout and components |
+| `js/main.js` | Entry point: theme, layout, dialogs, wiring |
+| `js/platform.js` | `chrome.*` wrapper with a localStorage fallback |
+| `js/storage.js` | Every stored key, the defaults, and backup |
+| `js/util.js` | DOM builder and small helpers |
+| `js/card.js` | Shared widget shell |
+| `js/controls.js` | Form controls for the settings dialog |
+| `scripts/check.js` | Static checks |
+| `tests/` | Unit tests and a jsdom page test |
+
+## Rules
+
+**Build the DOM with `el()` from `js/util.js`.** Never write `innerHTML` with
+text that came from the user. `el('div', { class: 'x', onClick: fn }, child)`.
+
+**Never touch `chrome.*` directly outside `js/platform.js`.** Use `sync`,
+`local`, `hasApi()` and `hasPermissions()`. The page must keep working
+outside an extension, which is how the tests run it.
+
+**Every stored key lives in `js/storage.js`,** with a default, a getter and a
+setter. Add new keys to `SYNC_KEYS` or `LOCAL_KEYS` so backups keep working.
+`sync` is small and shared across profiles; `local` is large and per device.
+Big or private things (notes, cached photos) go in `local`.
+
+**Settings are one deep-merged object.** Add a default to `DEFAULT_SETTINGS`,
+then read it with `settings()` and write it with `updateSettings({ patch })`.
+A patch only names what changes.
+
+**A widget is a `render<Name>(container)` function** that builds a `card()`,
+fills it and calls `container.replaceChildren(root)`. It reads its own state,
+saves its own state and re-renders itself. `main.js` decides whether to call
+it at all.
+
+**Ask for optional permissions, never at install time.** `tabs`, `bookmarks`,
+`history` and `topSites` stay in `optional_permissions`, and the code degrades
+to nothing when they are missing.
+
+**Nothing leaves the device** except the two hosts the manifest names
+(picsum.photos for photos, open-meteo.com for weather). No analytics, no
+fonts from a CDN, no third-party favicon service — icons come from Chrome's
+own cache through `faviconUrl()`.
+
+**No new runtime dependencies.** Ever.
+
+## Adding a widget
+
+1. `js/<name>.js` exporting `render<Name>(container)`.
+2. `<div id="<name>" class="widget-slot"></div>` in `newtab.html`.
+3. A `widgets.<name>: true` default in `DEFAULT_SETTINGS`.
+4. A row in `widgetsPanel()` in `js/settings.js`.
+5. `dom.<name>`, a `show()` line and a render call in `refreshLayout()` in
+   `js/main.js`.
+6. Styles in `css/app.css`, tests in `tests/widgets.test.js`.
+
+`npm run check` fails if an id or a CSS class is missing, which catches
+steps 2 and 6.
+
+## Style
+
+- Modules and files are lower case, one job each.
+- Comments say *why*, not *what*, and are rare. Write ASD-STE100 style plain
+  English in comments, UI text and docs: short sentences, common words, no
+  jargon.
+- Async/await, never `.then()` chains in page code.
+- Keep the UI calm. No animation that moves more than a few pixels.
+
+## Commits
+
+Short messages, prefixed `feat:`, `fix:`, `chore:` or `doc:`. One subject
+line. No co-author line for the human.

@@ -1,8 +1,9 @@
 // Ctrl/Cmd+K command palette: one box for links, tabs, bookmarks,
 // history and actions.
 
-import { el, faviconNode, debounce, asUrl } from './util.js';
+import { el, faviconNode, debounce, asUrl, copyText, toast } from './util.js';
 import { search, groupResults, OPTIONAL_SOURCES } from './omni.js';
+import { answer } from './answers.js';
 import { activate } from './actions.js';
 import { getEngines } from './storage.js';
 import { buildSearchUrl } from './engines.js';
@@ -21,7 +22,10 @@ let enginesReady = null;
 
 function rowNode(item, index) {
   const row = el('div', {
-    class: 'pal-row' + (index === selected ? ' selected' : ''),
+    class:
+      'pal-row' +
+      (item.type === 'answer' ? ' pal-answer' : '') +
+      (index === selected ? ' selected' : ''),
     role: 'option',
     'aria-selected': index === selected ? 'true' : 'false',
     dataset: { index: String(index) },
@@ -101,6 +105,25 @@ async function permissionCommand() {
   ];
 }
 
+/** A sum or a unit conversion, worked out here and shown above everything. */
+export function answerRow(query) {
+  const result = answer(query);
+  if (!result) return [];
+  return [
+    {
+      type: 'answer',
+      glyph: '=',
+      title: result.title,
+      subtitle: result.detail,
+      hint: 'copy',
+      run: async () => {
+        const ok = await copyText(result.value);
+        toast(ok ? `Copied ${result.value}` : 'Could not copy.');
+      },
+    },
+  ];
+}
+
 /** The "open this address" row, shown first when the query is a URL. */
 function directUrlRow(query) {
   const url = asUrl(query);
@@ -150,7 +173,9 @@ async function refresh() {
   if (token !== queryToken) return;
 
   const trimmed = query.trim();
-  const extras = trimmed ? [...directUrlRow(trimmed), ...searchRows(trimmed)] : [];
+  const extras = trimmed
+    ? [...answerRow(trimmed), ...directUrlRow(trimmed), ...searchRows(trimmed)]
+    : [];
   render([...extras, ...results]);
   setSelected(0, { scroll: true });
 }

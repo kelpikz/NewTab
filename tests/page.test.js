@@ -94,6 +94,17 @@ describe('new tab page', { skip }, () => {
     await page.press('Escape', { target: '.pal-input' });
   });
 
+  test('the palette works out a sum and a conversion', async () => {
+    await page.press('k', { ctrlKey: true });
+    await page.fill('.pal-input', '24 * 7');
+    assert.equal(page.text('.pal-group'), 'Answer');
+    assert.equal(page.text('.pal-title'), '168');
+
+    await page.fill('.pal-input', '10 km in miles');
+    assert.equal(page.text('.pal-title'), '6.2137119 mi');
+    await page.press('Escape', { target: '.pal-input' });
+  });
+
   test('the search bar suggests matching links', async () => {
     await page.fill('.search-input', 'hn');
     assert.ok(page.$('.suggest-list').classList.contains('open'));

@@ -19,6 +19,7 @@ const TYPE_BOOST = {
 };
 
 export const GROUP_LABEL = {
+  answer: 'Answer',
   command: 'Actions',
   link: 'Quick links',
   routine: 'Routines',
@@ -29,7 +30,7 @@ export const GROUP_LABEL = {
   search: 'Search',
 };
 
-const GROUP_ORDER = ['command', 'link', 'routine', 'tab', 'bookmark', 'top', 'history', 'search'];
+const GROUP_ORDER = ['answer', 'command', 'link', 'routine', 'tab', 'bookmark', 'top', 'history', 'search'];
 
 async function safe(promise, fallback) {
   try {
