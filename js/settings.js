@@ -14,6 +14,8 @@ import { geocode } from './weather.js';
 import { OPTIONAL_SOURCES } from './omni.js';
 import { clearUsage } from './frecency.js';
 import { clearVisitLog } from './screentime.js';
+import { getCalendarFeed, saveCalendarFeed } from './storage.js';
+import { normalizeFeedUrl } from './calendar.js';
 import { hasPermissions, requestPermissions, removePermissions, hasApi } from './platform.js';
 
 const ACCENTS = ['#7c9cff', '#5ad2a0', '#ffb454', '#ff7b8a', '#c792ea', '#4dd0e1', '#e0e0e0'];
@@ -462,6 +464,46 @@ function mindfulSection(rerender) {
   );
 }
 
+
+function calendarSection(rerender) {
+  const field = textInput({
+    value: '',
+    placeholder: 'https://calendar.google.com/calendar/ical/…/basic.ics',
+    label: 'Calendar address',
+  });
+  getCalendarFeed().then((url) => {
+    field.value = url;
+  });
+
+  const save = async (url) => {
+    await saveCalendarFeed(normalizeFeedUrl(url));
+    actions.refreshLayout?.();
+    toast(url ? 'Calendar saved.' : 'Calendar removed.');
+  };
+
+  return section(
+    'Calendar',
+    el('p', {
+      class: 'set-hint',
+      text: 'In Google Calendar open Settings, pick your calendar, then copy "Secret address in iCal format". The address stays on this device and is left out of backups.',
+    }),
+    row('Calendar address', field),
+    row(
+      'Save',
+      el(
+        'div',
+        { class: 'set-buttons' },
+        button('Save address', () => save(field.value), 'primary'),
+        button('Remove', () => {
+          field.value = '';
+          save('');
+          rerender();
+        })
+      )
+    )
+  );
+}
+
 function widgetsPanel(rerender) {
   const config = settings();
   const items = [
@@ -471,6 +513,7 @@ function widgetsPanel(rerender) {
     ['habits', 'Habits'],
     ['countdowns', 'Countdowns'],
     ['mindful', 'Time'],
+    ['calendar', 'Calendar'],
     ['notes', 'Notes'],
     ['routines', 'Routines'],
     ['weather', 'Weather'],
@@ -505,6 +548,7 @@ function widgetsPanel(rerender) {
     ),
     weatherSection(rerender),
     mindfulSection(rerender),
+    calendarSection(rerender),
     section(
       'Focus timer',
       row(

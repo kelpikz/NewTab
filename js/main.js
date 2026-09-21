@@ -28,6 +28,7 @@ import { renderTasks } from './tasks.js';
 import { renderHabits } from './habits.js';
 import { renderCountdowns } from './countdowns.js';
 import { renderScreenTime } from './screentime.js';
+import { renderCalendar } from './calendar.js';
 import { onVisitCounted } from './mindful.js';
 import { renderNotes } from './notes.js';
 import { renderTimer } from './timer.js';
@@ -49,6 +50,7 @@ const dom = {
   habits: document.getElementById('habits'),
   countdowns: document.getElementById('countdowns'),
   mindful: document.getElementById('mindful'),
+  calendar: document.getElementById('calendar'),
   notes: document.getElementById('notes'),
   routines: document.getElementById('routines'),
   widgets: document.getElementById('widgets'),
@@ -163,6 +165,7 @@ async function refreshLayout() {
       widgets.habits ||
       widgets.countdowns ||
       widgets.mindful ||
+      widgets.calendar ||
       widgets.notes ||
       widgets.routines
   );
@@ -177,6 +180,7 @@ async function refreshLayout() {
     widgets.habits ? renderHabits(dom.habits) : null,
     widgets.countdowns ? renderCountdowns(dom.countdowns) : null,
     widgets.mindful ? renderScreenTime(dom.mindful) : null,
+    widgets.calendar ? renderCalendar(dom.calendar, { onConfigure: () => openSettings('widgets') }) : null,
     refreshNotes(),
     widgets.routines ? renderRoutines(dom.routines) : null,
     refreshWeather(),
@@ -191,6 +195,7 @@ async function refreshLayout() {
       habits: dom.habits,
       countdowns: dom.countdowns,
       mindful: dom.mindful,
+      calendar: dom.calendar,
       notes: dom.notes,
       routines: dom.routines,
     },

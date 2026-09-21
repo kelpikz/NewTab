@@ -15,6 +15,8 @@ const FOCUS_KEY = 'dailyFocus';
 const USAGE_KEY = 'usage';
 const ACTIVE_WIDGET_KEY = 'activeWidget';
 const VISITS_KEY = 'visitLog';
+const CALENDAR_FEED_KEY = 'calendarFeed';
+const CALENDAR_CACHE_KEY = 'calendarCache';
 
 const clone = (value) => structuredClone(value);
 
@@ -46,6 +48,7 @@ export const DEFAULT_SETTINGS = {
     habits: true,
     countdowns: true,
     mindful: true,
+    calendar: true,
     notes: true,
     routines: true,
     weather: true,
@@ -350,6 +353,29 @@ export async function getVisitLog() {
 
 export async function saveVisitLog(log) {
   await local.set({ [VISITS_KEY]: log });
+}
+
+/**
+ * The calendar feed address. It is a secret, so it stays on this device and
+ * is left out of the backup file.
+ */
+export async function getCalendarFeed() {
+  const result = await local.get(CALENDAR_FEED_KEY);
+  return result[CALENDAR_FEED_KEY] ?? '';
+}
+
+export async function saveCalendarFeed(url) {
+  await local.set({ [CALENDAR_FEED_KEY]: url });
+  await local.remove(CALENDAR_CACHE_KEY);
+}
+
+export async function getCalendarCache() {
+  const result = await local.get(CALENDAR_CACHE_KEY);
+  return result[CALENDAR_CACHE_KEY] ?? null;
+}
+
+export async function saveCalendarCache(cache) {
+  await local.set({ [CALENDAR_CACHE_KEY]: cache });
 }
 
 /** The widget tab last opened in the deck layout. */

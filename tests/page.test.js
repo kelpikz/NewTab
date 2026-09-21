@@ -100,7 +100,7 @@ describe('new tab page', { skip }, () => {
   test('the deck shows one widget at a time', async () => {
     assert.deepEqual(
       page.$$('.widget-tab').map((tab) => tab.textContent),
-      ['Tasks', 'Habits', 'Countdowns', 'Time', 'Notes', 'Routines']
+      ['Tasks', 'Habits', 'Countdowns', 'Time', 'Calendar', 'Notes', 'Routines']
     );
     assert.equal(page.$$('.widget-slot:not([hidden])').length, 1);
 
@@ -114,6 +114,7 @@ describe('new tab page', { skip }, () => {
     assert.equal(page.$('#routines').hidden, false);
     await page.press('w');
     assert.equal(page.$('#tasks').hidden, false, 'the tabs wrap around');
+    await page.press('t');
     await page.press('t');
     assert.equal(page.$('#tasks').hidden, false);
   });
