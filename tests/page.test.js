@@ -59,6 +59,8 @@ describe('new tab page', { skip }, () => {
     assert.equal(page.$$('.habit').length, 1);
     assert.equal(page.text('.habit-name'), 'Read');
     assert.equal(page.$$('.habit-dot').length, 7);
+    // The heading uses the same grid as a row, so the letters line up.
+    assert.equal(page.$$('.habit-scale .habit-dots > *').length, 7);
     assert.equal(page.text('.habit-streak'), '–');
 
     await page.click(page.$$('.habit-dot').at(-1));

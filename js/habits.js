@@ -146,17 +146,25 @@ export async function renderHabits(container) {
   };
 
   if (habits.length) {
+    // The heading repeats the shape of a row, so the letters sit over the dots.
     body.appendChild(
       el(
         'div',
         { class: 'habit-scale' },
-        ...days.map((key) =>
-          el('span', {
-            class: 'habit-scale-day' + (key === today ? ' today' : ''),
-            text: dayLabel(key).charAt(0),
-            title: dayLabel(key),
-          })
-        )
+        el('span', { class: 'habit-scale-name' }),
+        el(
+          'span',
+          { class: 'habit-dots' },
+          ...days.map((key) =>
+            el('span', {
+              class: 'habit-scale-day' + (key === today ? ' today' : ''),
+              text: dayLabel(key).charAt(0),
+              title: dayLabel(key),
+            })
+          )
+        ),
+        el('span', { class: 'habit-scale-streak' }),
+        el('span', { class: 'habit-scale-end' })
       )
     );
     const list = el('ul', { class: 'habit-list' });
