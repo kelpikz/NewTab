@@ -11,6 +11,9 @@ import {
   getGroups,
   setActiveGroupId,
   exportData,
+  getTasks,
+  saveTasks,
+  saveDailyFocus,
 } from './storage.js';
 import { renderQuicklinks, cycleGroup, openQuicklink } from './quicklinks.js';
 import { applyBackground } from './background.js';
@@ -28,7 +31,8 @@ import { renderNotes } from './notes.js';
 import { renderTimer } from './timer.js';
 import { initPalette, openPalette, reloadEngines } from './palette.js';
 import { initShortcuts } from './shortcuts.js';
-import { el, toast, faviconNode, hostOf } from './util.js';
+import { el, toast, faviconNode, hostOf, asUrl } from './util.js';
+import { answer } from './answers.js';
 import { currentWindowTabs, requestPermissions, hasPermissions, hasApi } from './platform.js';
 
 const dom = {
@@ -410,6 +414,39 @@ function paletteCommands() {
   ];
 }
 
+/**
+ * Rows built from whatever is in the box, so a thought can be caught without
+ * leaving the palette. Addresses and sums have their own rows already.
+ */
+function queryCommands(query) {
+  const text = query.trim();
+  if (text.length < 3 || asUrl(text) || answer(text)) return [];
+  return [
+    {
+      type: 'command',
+      glyph: '✓',
+      title: `Add task “${text}”`,
+      run: async () => {
+        const tasks = await getTasks();
+        tasks.push({ id: crypto.randomUUID(), text, done: false, created: Date.now() });
+        await saveTasks(tasks);
+        toast('Task added.');
+        if (settings().widgets.tasks) renderTasks(dom.tasks);
+      },
+    },
+    {
+      type: 'command',
+      glyph: '◎',
+      title: `Make “${text}” today's focus`,
+      run: async () => {
+        await saveDailyFocus({ text, done: false });
+        toast('Focus set.');
+        if (settings().widgets.focus) renderDailyFocus(dom.focus);
+      },
+    },
+  ];
+}
+
 /* ------------------------------------------------------------------ */
 /* Start-up                                                            */
 /* ------------------------------------------------------------------ */
@@ -426,7 +463,7 @@ async function start() {
   refreshBackground();
 
   initRoutineDialog(() => renderRoutines(dom.routines));
-  initPalette({ getCommands: paletteCommands });
+  initPalette({ getCommands: paletteCommands, getQueryCommands: queryCommands });
 
   initSettings({
     button: document.getElementById('settings-button'),

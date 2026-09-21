@@ -29,6 +29,12 @@ The palette also learns. Every row you pick is counted, and rows you pick
 often — especially for the same words — rise to the top next time. Recent
 picks count for more than old ones. Clear the record in **Settings → Data**.
 
+#### Catch a thought
+
+Type something that is neither an address nor a sum and the palette offers to
+keep it: **Add task "call the plumber"**, or **Make "finish the draft"
+today's focus**.
+
 #### Instant answers
 
 Type a sum or a conversion and the result appears at the top of the list.

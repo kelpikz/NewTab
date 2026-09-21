@@ -147,6 +147,24 @@ describe('new tab page', { skip }, () => {
     await page.press('Escape', { target: '.pal-input' });
   });
 
+  test('the palette turns what you typed into a task', async () => {
+    await page.press('k', { ctrlKey: true });
+    await page.fill('.pal-input', 'call the plumber');
+    const row = page
+      .$$('.pal-row')
+      .find((node) => node.textContent.includes('Add task'));
+    assert.ok(row, 'an add-task row is offered');
+
+    await page.click(row);
+    await page.wait(200);
+    assert.ok(
+      page.$$('.task-text').some((node) => node.textContent === 'call the plumber'),
+      'the task was added'
+    );
+
+    await page.click(page.$$('.task').at(-1).querySelector('.task-remove'));
+  });
+
   test('the search bar suggests matching links', async () => {
     await page.fill('.search-input', 'hn');
     assert.ok(page.$('.suggest-list').classList.contains('open'));

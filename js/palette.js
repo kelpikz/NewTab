@@ -18,6 +18,7 @@ let selected = 0;
 let isOpen = false;
 let queryToken = 0;
 let getCommands = () => [];
+let getQueryCommands = () => [];
 let engines = [];
 let enginesReady = null;
 
@@ -175,7 +176,12 @@ async function refresh() {
 
   const trimmed = query.trim();
   const extras = trimmed
-    ? [...answerRow(trimmed), ...directUrlRow(trimmed), ...searchRows(trimmed)]
+    ? [
+        ...answerRow(trimmed),
+        ...directUrlRow(trimmed),
+        ...getQueryCommands(trimmed),
+        ...searchRows(trimmed),
+      ]
     : [];
   render([...extras, ...results]);
   setSelected(0, { scroll: true });
@@ -245,6 +251,8 @@ function build() {
 
 export function initPalette(options = {}) {
   getCommands = options.getCommands ?? (() => []);
+  // Commands built from what was typed, such as "add this as a task".
+  getQueryCommands = options.getQueryCommands ?? (() => []);
   build();
   ensureEngines();
 }
