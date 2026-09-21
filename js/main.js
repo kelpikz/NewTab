@@ -28,6 +28,7 @@ import { renderTimer } from './timer.js';
 import { initPalette, openPalette, reloadEngines } from './palette.js';
 import { initShortcuts } from './shortcuts.js';
 import { el, toast } from './util.js';
+import { currentWindowTabs, requestPermissions } from './platform.js';
 
 const dom = {
   background: document.getElementById('background'),
@@ -277,6 +278,28 @@ function paletteCommands() {
       title: 'New routine',
       keywords: ['session', 'open many'],
       run: () => openRoutineDialog(),
+    },
+    {
+      type: 'command',
+      glyph: '⇲',
+      title: 'Save my open tabs as a routine',
+      keywords: ['session', 'snapshot', 'window', 'tabs'],
+      run: async () => {
+        const granted = await requestPermissions(['tabs']);
+        if (!granted) {
+          toast('Chrome did not allow tab access.');
+          return;
+        }
+        const tabs = await currentWindowTabs();
+        if (!tabs.length) {
+          toast('No web pages are open in this window.');
+          return;
+        }
+        openRoutineDialog({
+          name: `Session ${new Date().toLocaleDateString()}`,
+          urls: tabs.map((tab) => tab.url),
+        });
+      },
     },
     {
       type: 'command',

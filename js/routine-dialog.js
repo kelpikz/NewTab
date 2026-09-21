@@ -44,12 +44,16 @@ export function initRoutineDialog(onChange) {
   onChangeCallback = onChange;
 }
 
+/**
+ * `index` decides whether this saves a new routine or edits one. A routine
+ * with no index fills the form in, which is how a saved session starts.
+ */
 export function openRoutineDialog(routine = null, index = null) {
   editIndex = index;
-  title.textContent = routine ? 'Edit routine' : 'New routine';
+  title.textContent = index === null ? 'New routine' : 'Edit routine';
   nameInput.value = routine?.name ?? '';
   urlsInput.value = routine?.urls.join('\n') ?? '';
-  deleteBtn.style.display = routine ? 'inline-block' : 'none';
+  deleteBtn.style.display = index === null ? 'none' : 'inline-block';
   dialog.showModal();
   nameInput.focus();
 }

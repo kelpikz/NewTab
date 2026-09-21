@@ -99,6 +99,17 @@ export function removePermissions(permissions) {
   return changePermissions('remove', permissions);
 }
 
+/** Every web page open in this window. Empty without the tabs permission. */
+export async function currentWindowTabs() {
+  if (!hasApi('tabs') || !(await hasPermissions(['tabs']))) return [];
+  try {
+    const tabs = await chrome.tabs.query({ currentWindow: true });
+    return tabs.filter((tab) => /^https?:/i.test(tab.url ?? ''));
+  } catch {
+    return [];
+  }
+}
+
 /** Extension-internal URL, or null outside an extension. */
 export function extensionUrl(path) {
   if (typeof chrome === 'undefined' || !chrome.runtime?.getURL) return null;
