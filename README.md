@@ -1,7 +1,8 @@
 # My New Tab
 
-A Chrome new tab replacement: quick links, a command palette, weather, tasks,
-notes and a focus timer. No build step, no dependencies, no tracking.
+A Chrome new tab replacement: quick links, a command palette that also does
+sums, weather with a forecast, tasks, habits, countdowns, notes and a focus
+timer. No build step, no dependencies, no tracking.
 
 ## Install
 
@@ -24,6 +25,31 @@ extension does not ask for them at install time. Turn them on from the palette
 or from **Settings → Search**, and turn them off again whenever you want.
 Nothing is ever sent off your computer.
 
+The palette also learns. Every row you pick is counted, and rows you pick
+often — especially for the same words — rise to the top next time. Recent
+picks count for more than old ones. Clear the record in **Settings → Data**.
+
+#### Instant answers
+
+Type a sum or a conversion and the result appears at the top of the list.
+`Enter` copies it.
+
+| Type this | Get this |
+| --- | --- |
+| `24 * 7` | 168 |
+| `(2 + 3) ^ 4` | 625 |
+| `20% of 60` | 12 |
+| `120 + 10%` | 132 |
+| `sqrt(144)` | 12 |
+| `10 km in miles` | 6.2137119 mi |
+| `72f to c` | 22.222222 c |
+| `1 gb in mb` | 1,000 mb |
+| `3 cups to ml` | 709.76471 ml |
+
+Lengths, masses, volumes, data sizes, time, speed, area, angles and
+temperature all convert. The sums run here — nothing is sent anywhere, and no
+`eval()` is used.
+
 ### Search bar
 
 Search the web, or pick a suggestion from your own tabs, bookmarks and
@@ -44,6 +70,9 @@ keep here. A site with no icon gets a coloured letter tile.
 
 Named sets of URLs. One click opens all of them in a new window.
 
+**Save my open tabs as a routine** in the palette turns the window you are in
+into a routine, so you can pick the same set of pages up tomorrow.
+
 ### Clock, greeting and daily focus
 
 A large clock (12 or 24 hour), a greeting with your name, and one thing to
@@ -55,10 +84,25 @@ Current temperature, conditions and the day's high and low, from
 [Open-Meteo](https://open-meteo.com) — free, no account, no API key. Search for
 your city in **Settings → Widgets**. Readings are cached for 30 minutes.
 
+Click the reading for the rest: how it feels, humidity, wind, and the next
+five days with their chance of rain.
+
 ### Tasks and notes
 
 A checklist that syncs across your Chrome profiles, and a scratchpad that saves
 itself as you type. Notes stay on this device only.
+
+### Habits
+
+One row per habit and one dot per day, for the last seven days. Click a dot to
+mark that day, click it again to undo, and the number on the right counts the
+days you have kept the run. A run stays alive until you miss a whole day, so
+it does not drop just because today is not done yet.
+
+### Countdowns
+
+Days you are counting towards — a trip, a release, a birthday. The nearest one
+sits at the top, and days that have passed sink to the bottom.
 
 ### Focus timer
 
@@ -98,7 +142,7 @@ own image, with dim and blur sliders. Every widget can be turned off.
 | `favicon` | Site icons from Chrome's own cache instead of a third party |
 | `picsum.photos` | Background photos |
 | `open-meteo.com` | Weather and city search |
-| `tabs`, `bookmarks`, `history`, `topSites` | **Optional.** Only for palette search, only if you turn them on |
+| `tabs`, `bookmarks`, `history`, `topSites` | **Optional.** Palette search, saving open tabs as a routine, and filling a new tile from a tab. Only if you turn them on |
 
 ## Development
 
@@ -120,10 +164,12 @@ css/base.css           Design tokens, reset, buttons, dialogs
 css/app.css            Layout and components
 js/main.js             Entry point: theme, layout, dialogs, wiring
 js/platform.js         chrome.* wrapper with a localStorage fallback
-js/storage.js          Settings, links, engines, routines, tasks, backup
+js/storage.js          Every stored key, the defaults and backup
 js/util.js             DOM builder and small helpers
 js/omni.js             Gathers palette and suggestion candidates
 js/fuzzy.js            Match scoring and ranking
+js/frecency.js         Remembers which rows get picked
+js/answers.js          Sums and unit conversions
 js/palette.js          Command palette
 js/actions.js          Runs whatever a result row stands for
 js/search.js           Search bar with suggestions
@@ -133,6 +179,8 @@ js/clock.js            Clock and greeting
 js/focus.js            Daily focus
 js/weather.js          Open-Meteo client and icons
 js/tasks.js            Task list
+js/habits.js           Habit tracker
+js/countdowns.js       Countdowns
 js/notes.js            Scratchpad
 js/timer.js            Focus timer
 js/routines.js         Routines widget
@@ -144,4 +192,5 @@ js/card.js             Widget card shell
 js/shortcuts.js        Keyboard shortcuts and the help sheet
 scripts/check.js       Static checks
 tests/                 Unit and page tests
+AGENTS.md              Conventions, for people and for coding agents
 ```

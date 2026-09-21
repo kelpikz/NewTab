@@ -36,6 +36,9 @@ Do not start a dev server. There is nothing to serve — load the folder at
 | `js/util.js` | DOM builder and small helpers |
 | `js/card.js` | Shared widget shell |
 | `js/controls.js` | Form controls for the settings dialog |
+| `js/omni.js` | Gathers palette and suggestion candidates |
+| `js/answers.js` | Sums and unit conversions; pure, no DOM |
+| `js/frecency.js` | Remembers which palette rows get picked |
 | `scripts/check.js` | Static checks |
 | `tests/` | Unit tests and a jsdom page test |
 
@@ -44,9 +47,11 @@ Do not start a dev server. There is nothing to serve — load the folder at
 **Build the DOM with `el()` from `js/util.js`.** Never write `innerHTML` with
 text that came from the user. `el('div', { class: 'x', onClick: fn }, child)`.
 
-**Never touch `chrome.*` directly outside `js/platform.js`.** Use `sync`,
-`local`, `hasApi()` and `hasPermissions()`. The page must keep working
-outside an extension, which is how the tests run it.
+**Storage always goes through `js/platform.js`** (`sync` and `local`), and
+every other `chrome.*` call is guarded by `hasApi()` and, for an optional
+permission, `hasPermissions()`. A capability used by more than one module
+belongs in `platform.js`. The page must keep working outside an extension,
+which is how the tests run it.
 
 **Every stored key lives in `js/storage.js`,** with a default, a getter and a
 setter. Add new keys to `SYNC_KEYS` or `LOCAL_KEYS` so backups keep working.
@@ -81,7 +86,9 @@ own cache through `faviconUrl()`.
 4. A row in `widgetsPanel()` in `js/settings.js`.
 5. `dom.<name>`, a `show()` line and a render call in `refreshLayout()` in
    `js/main.js`.
-6. Styles in `css/app.css`, tests in `tests/widgets.test.js`.
+6. Styles in `css/app.css`.
+7. Unit tests for the widget's pure parts in `tests/<name>.test.js`, and a
+   round trip through the page in `tests/page.test.js`.
 
 `npm run check` fails if an id or a CSS class is missing, which catches
 steps 2 and 6.
@@ -94,6 +101,8 @@ steps 2 and 6.
   jargon.
 - Async/await, never `.then()` chains in page code.
 - Keep the UI calm. No animation that moves more than a few pixels.
+- Pull the logic out of the DOM code and test it on its own: `streak()`,
+  `daysUntil()`, `answer()` and `boostFor()` are all pure functions.
 
 ## Commits
 
