@@ -4,16 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>New Tab</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
-  <div id="background" class="background"></div>
+  <div id="background" class="bg"></div>
+  <div class="bg-veil"></div>
+
+  <header class="topbar">
+    <div id="weather" class="weather"></div>
+    <div class="topbar-right">
+      <div id="timer" class="timer"></div>
+      <button type="button" id="palette-button" class="icon-button" title="Command palette (Ctrl+K)" aria-label="Command palette">⌘</button>
+      <button type="button" id="shortcuts-button" class="icon-button" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">⌨</button>
+      <button type="button" id="settings-button" class="icon-button" title="Settings (,)" aria-label="Settings">⚙</button>
+    </div>
+  </header>
 
   <main class="content">
-    <nav id="quicklinks" class="quicklinks"></nav>
+    <section id="clock" class="clock"></section>
+    <section id="daily-focus" class="daily-focus"></section>
     <section id="search-bar" class="search-bar"></section>
-    <section id="routines" class="routines"></section>
+    <nav id="quicklinks" class="quicklinks"></nav>
+    <section id="widgets" class="widgets">
+      <div id="tasks" class="widget-slot"></div>
+      <div id="notes" class="widget-slot"></div>
+      <div id="routines" class="widget-slot"></div>
+    </section>
   </main>
+
+  <p id="photo-credit" class="photo-credit"></p>
+  <div id="palette-root"></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <dialog id="add-site-dialog" class="dialog">
     <form id="add-site-form" method="dialog">
@@ -27,19 +49,19 @@
         <input type="url" id="site-url" placeholder="https://github.com" required />
       </label>
       <label>
-        Tab
+        Tab group
         <select id="site-group"></select>
       </label>
       <div class="dialog-actions">
         <button type="button" id="cancel-add" class="btn btn-secondary">Cancel</button>
-        <button type="submit" class="btn btn-primary">Add</button>
+        <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </form>
   </dialog>
 
   <dialog id="group-dialog" class="dialog">
     <form id="group-form" method="dialog">
-      <h2 id="group-dialog-title">New tab</h2>
+      <h2 id="group-dialog-title">New tab group</h2>
       <label>
         Name
         <input type="text" id="group-name" placeholder="e.g. Productivity" required />
@@ -74,18 +96,23 @@
   </dialog>
 
   <dialog id="settings-dialog" class="dialog settings-dialog">
-    <form id="settings-form" method="dialog">
-      <h2>Search settings</h2>
-      <div id="settings-engines"></div>
-      <div class="dialog-actions">
-        <button type="button" id="cancel-settings" class="btn btn-secondary">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
-      </div>
-    </form>
+    <div class="settings-head">
+      <h2>Settings</h2>
+      <button type="button" id="close-settings" class="dialog-close" aria-label="Close settings">✕</button>
+    </div>
+    <div class="settings-body">
+      <nav id="settings-tabs" class="settings-tabs" aria-label="Settings sections"></nav>
+      <div id="settings-panel" class="settings-panel"></div>
+    </div>
   </dialog>
 
-  <button type="button" id="settings-button" class="settings-button" title="Settings">⚙</button>
-  <p id="photo-credit" class="photo-credit"></p>
+  <dialog id="shortcuts-dialog" class="dialog shortcuts-dialog">
+    <div class="settings-head">
+      <h2>Keyboard shortcuts</h2>
+      <button type="button" id="close-shortcuts" class="dialog-close" aria-label="Close shortcuts">✕</button>
+    </div>
+    <div id="shortcuts-list" class="shortcuts-list"></div>
+  </dialog>
 
   <script type="module" src="js/main.js"></script>
 </body>

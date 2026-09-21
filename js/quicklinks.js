@@ -7,162 +7,138 @@ import {
   reorderLink,
   moveLinkToGroup,
 } from './storage.js';
+import { el, faviconNode } from './util.js';
+import { openUrl } from './platform.js';
 
 let dragData = null;
+let lastRender = null;
 
-function makeDropTarget(el, { accepts, onDrop }) {
-  el.addEventListener('dragover', (e) => {
+function makeDropTarget(node, { accepts, onDrop }) {
+  node.addEventListener('dragover', (event) => {
     if (dragData && accepts(dragData)) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      el.classList.add('drag-over');
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      node.classList.add('drag-over');
     }
   });
-  el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-  el.addEventListener('drop', (e) => {
-    el.classList.remove('drag-over');
+  node.addEventListener('dragleave', () => node.classList.remove('drag-over'));
+  node.addEventListener('drop', (event) => {
+    node.classList.remove('drag-over');
     if (dragData && accepts(dragData)) {
-      e.preventDefault();
+      event.preventDefault();
       onDrop(dragData);
     }
   });
 }
 
-function makeDraggable(el, getData) {
-  el.draggable = true;
-  el.addEventListener('dragstart', (e) => {
+function makeDraggable(node, getData) {
+  node.draggable = true;
+  node.addEventListener('dragstart', (event) => {
     dragData = getData();
-    e.dataTransfer.effectAllowed = 'move';
-    el.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    node.classList.add('dragging');
   });
-  el.addEventListener('dragend', () => {
+  node.addEventListener('dragend', () => {
     dragData = null;
-    el.classList.remove('dragging');
+    node.classList.remove('dragging');
   });
-}
-
-const FAVICON_API = 'https://www.google.com/s2/favicons';
-
-function faviconUrl(siteUrl) {
-  const domain = new URL(siteUrl).hostname;
-  return `${FAVICON_API}?domain=${domain}&sz=64`;
 }
 
 function tileAction({ className, text, title, onClick }) {
-  const btn = document.createElement('button');
-  btn.className = className;
-  btn.textContent = text;
-  btn.title = title;
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClick();
+  return el('button', {
+    type: 'button',
+    class: className,
+    text,
+    title,
+    'aria-label': title,
+    onClick: (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onClick();
+    },
   });
-  return btn;
 }
 
 function createLinkTile(link, index, groupId, { onEdit, onRemove, onReorder }) {
-  const tile = document.createElement('a');
-  tile.className = 'quicklink';
-  tile.href = link.url;
+  const tile = el('a', { class: 'quicklink', href: link.url, title: link.url });
 
   makeDraggable(tile, () => ({ type: 'link', groupId, index }));
   makeDropTarget(tile, {
-    accepts: (d) => d.type === 'link' && !(d.groupId === groupId && d.index === index),
-    onDrop: (d) => onReorder(d.index, index),
+    accepts: (data) => data.type === 'link' && !(data.groupId === groupId && data.index === index),
+    onDrop: (data) => onReorder(data.index, index),
   });
 
-  const icon = document.createElement('div');
-  icon.className = 'quicklink-icon';
-  const img = document.createElement('img');
-  img.src = faviconUrl(link.url);
-  img.alt = link.name;
-  icon.appendChild(img);
+  const icon = el('div', { class: 'quicklink-icon' }, faviconNode(link.url, link.name, 32));
 
-  const name = document.createElement('span');
-  name.className = 'quicklink-name';
-  name.textContent = link.name;
-
-  const editBtn = tileAction({
-    className: 'quicklink-action quicklink-edit',
-    text: '✎',
-    title: `Edit ${link.name}`,
-    onClick: () => onEdit(link, index, groupId),
-  });
-
-  const removeBtn = tileAction({
-    className: 'quicklink-action quicklink-remove',
-    text: '✕',
-    title: `Remove ${link.name}`,
-    onClick: () => onRemove(index, groupId),
-  });
-
-  tile.append(icon, name, editBtn, removeBtn);
+  tile.append(
+    icon,
+    el('span', { class: 'quicklink-name', text: link.name }),
+    index < 9 ? el('span', { class: 'quicklink-index', text: String(index + 1) }) : null,
+    tileAction({
+      className: 'quicklink-action quicklink-edit',
+      text: '✎',
+      title: `Edit ${link.name}`,
+      onClick: () => onEdit(link, index, groupId),
+    }),
+    tileAction({
+      className: 'quicklink-action quicklink-remove',
+      text: '✕',
+      title: `Remove ${link.name}`,
+      onClick: () => onRemove(index, groupId),
+    })
+  );
   return tile;
 }
 
 function createAddTile(groupId, onAdd) {
-  const tile = document.createElement('div');
-  tile.className = 'quicklink';
-  tile.setAttribute('role', 'button');
-  tile.tabIndex = 0;
-
-  const icon = document.createElement('div');
-  icon.className = 'quicklink-icon';
-  const plus = document.createElement('span');
-  plus.className = 'add-icon';
-  plus.textContent = '+';
-  icon.appendChild(plus);
-
-  const name = document.createElement('span');
-  name.className = 'quicklink-name';
-  name.textContent = 'Add site';
-
-  tile.append(icon, name);
-  tile.addEventListener('click', () => onAdd(groupId));
-  return tile;
+  return el(
+    'div',
+    {
+      class: 'quicklink quicklink-add',
+      role: 'button',
+      tabIndex: 0,
+      title: 'Add a site',
+      onClick: () => onAdd(groupId),
+      onKeydown: (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onAdd(groupId);
+        }
+      },
+    },
+    el('div', { class: 'quicklink-icon' }, el('span', { class: 'add-icon', text: '+' })),
+    el('span', { class: 'quicklink-name', text: 'Add site' })
+  );
 }
 
 function createTab(group, isActive, { onSelect, onEditGroup, onDropOnTab }) {
-  const tab = document.createElement('button');
-  tab.type = 'button';
-  tab.className = 'ql-tab' + (isActive ? ' active' : '');
-  tab.addEventListener('click', () => onSelect(group.id));
+  const tab = el('button', {
+    type: 'button',
+    class: 'ql-tab' + (isActive ? ' active' : ''),
+    'aria-current': isActive ? 'true' : 'false',
+    onClick: () => onSelect(group.id),
+  });
 
   makeDraggable(tab, () => ({ type: 'tab', groupId: group.id }));
   makeDropTarget(tab, {
-    accepts: (d) =>
-      (d.type === 'tab' && d.groupId !== group.id) ||
-      (d.type === 'link' && d.groupId !== group.id),
-    onDrop: (d) => onDropOnTab(d, group.id),
+    accepts: (data) => data.groupId !== group.id,
+    onDrop: (data) => onDropOnTab(data, group.id),
   });
 
-  const label = document.createElement('span');
-  label.textContent = group.name;
-  tab.appendChild(label);
-
+  tab.append(el('span', { text: group.name }));
   if (isActive) {
-    const edit = document.createElement('span');
-    edit.className = 'ql-tab-edit';
-    edit.textContent = '✎';
-    edit.title = `Edit "${group.name}" tab`;
-    edit.addEventListener('click', (e) => {
-      e.stopPropagation();
-      onEditGroup(group);
-    });
-    tab.appendChild(edit);
+    tab.append(
+      el('span', {
+        class: 'ql-tab-edit',
+        text: '✎',
+        title: `Edit "${group.name}" tab`,
+        onClick: (event) => {
+          event.stopPropagation();
+          onEditGroup(group);
+        },
+      })
+    );
   }
-
-  return tab;
-}
-
-function createAddTab(onAddGroup) {
-  const tab = document.createElement('button');
-  tab.type = 'button';
-  tab.className = 'ql-tab ql-tab-add';
-  tab.textContent = '+';
-  tab.title = 'New tab';
-  tab.addEventListener('click', onAddGroup);
   return tab;
 }
 
@@ -171,16 +147,16 @@ export async function renderQuicklinks(container, handlers) {
   const groups = await getGroups();
 
   let activeId = await getActiveGroupId();
-  if (!groups.some((g) => g.id === activeId)) {
+  if (!groups.some((group) => group.id === activeId)) {
     activeId = groups[0].id;
     await setActiveGroupId(activeId);
   }
-  const active = groups.find((g) => g.id === activeId);
+  const active = groups.find((group) => group.id === activeId);
+  lastRender = { container, handlers, groups, activeId };
 
   const rerender = () => renderQuicklinks(container, handlers);
 
-  const tabBar = document.createElement('div');
-  tabBar.className = 'ql-tabs';
+  const tabBar = el('div', { class: 'ql-tabs', role: 'tablist' });
   groups.forEach((group) => {
     tabBar.appendChild(
       createTab(group, group.id === activeId, {
@@ -189,22 +165,25 @@ export async function renderQuicklinks(container, handlers) {
           rerender();
         },
         onEditGroup,
-        onDropOnTab: async (d, targetGroupId) => {
-          if (d.type === 'tab') {
-            await reorderGroup(d.groupId, targetGroupId);
-          } else {
-            await moveLinkToGroup(d.groupId, d.index, targetGroupId);
-          }
+        onDropOnTab: async (data, targetGroupId) => {
+          if (data.type === 'tab') await reorderGroup(data.groupId, targetGroupId);
+          else await moveLinkToGroup(data.groupId, data.index, targetGroupId);
           rerender();
         },
       })
     );
   });
-  tabBar.appendChild(createAddTab(onAddGroup));
+  tabBar.appendChild(
+    el('button', {
+      type: 'button',
+      class: 'ql-tab ql-tab-add',
+      text: '+',
+      title: 'New tab group',
+      onClick: onAddGroup,
+    })
+  );
 
-  const grid = document.createElement('div');
-  grid.className = 'ql-grid';
-
+  const grid = el('div', { class: 'ql-grid' });
   const tileHandlers = {
     onEdit,
     onRemove: async (index, groupId) => {
@@ -223,4 +202,24 @@ export async function renderQuicklinks(container, handlers) {
   grid.appendChild(createAddTile(active.id, onAdd));
 
   container.replaceChildren(tabBar, grid);
+}
+
+/** Move to the previous or next tab group. Used by the keyboard shortcuts. */
+export async function cycleGroup(delta) {
+  if (!lastRender) return;
+  const { groups, activeId, container, handlers } = lastRender;
+  if (groups.length < 2) return;
+  const current = groups.findIndex((group) => group.id === activeId);
+  const next = groups[(current + delta + groups.length) % groups.length];
+  await setActiveGroupId(next.id);
+  await renderQuicklinks(container, handlers);
+}
+
+/** Open the nth quick link of the active group (1-based). */
+export async function openQuicklink(position, { newTab = false } = {}) {
+  const groups = await getGroups();
+  const activeId = (await getActiveGroupId()) ?? groups[0]?.id;
+  const active = groups.find((group) => group.id === activeId);
+  const link = active?.links[position - 1];
+  if (link) openUrl(link.url, { newTab });
 }

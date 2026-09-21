@@ -1,14 +1,17 @@
 {
   "manifest_version": 3,
   "name": "My New Tab",
-  "version": "1.0.0",
-  "description": "A minimal new tab page with quick links and beautiful backgrounds.",
+  "version": "2.0.0",
+  "description": "A calm new tab: quick links, command palette, weather, tasks, notes and a focus timer.",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "unlimitedStorage", "favicon"],
+  "optional_permissions": ["tabs", "bookmarks", "history", "topSites"],
   "host_permissions": [
     "https://picsum.photos/*",
-    "https://fastly.picsum.photos/*"
+    "https://fastly.picsum.photos/*",
+    "https://api.open-meteo.com/*",
+    "https://geocoding-api.open-meteo.com/*"
   ]
 }
