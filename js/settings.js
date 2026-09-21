@@ -12,6 +12,7 @@ import { row, toggle, select, slider, textInput, button, section } from './contr
 import { GRADIENTS, setCustomImage, clearCustomImage, getCustomImage } from './background.js';
 import { geocode } from './weather.js';
 import { OPTIONAL_SOURCES } from './omni.js';
+import { clearUsage } from './frecency.js';
 import { hasPermissions, requestPermissions, removePermissions, hasApi } from './platform.js';
 
 const ACCENTS = ['#7c9cff', '#5ad2a0', '#ffb454', '#ff7b8a', '#c792ea', '#4dd0e1', '#e0e0e0'];
@@ -581,6 +582,21 @@ function dataPanel() {
         )
       ),
       row('Import', fileInput)
+    ),
+    section(
+      'Learned order',
+      el('p', {
+        class: 'set-hint',
+        text: 'The palette lifts the rows you pick most. This record stays on this device.',
+      }),
+      row(
+        'Forget',
+        button('Forget what I picked', async () => {
+          await clearUsage();
+          toast('The palette starts over.');
+        }),
+        'Results go back to their plain order'
+      )
     ),
     section(
       'Danger zone',

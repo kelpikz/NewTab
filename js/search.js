@@ -4,6 +4,7 @@ import { answer } from './answers.js';
 import { buildSearchUrl, parsePrefix, engineIconNode } from './engines.js';
 import { search as omniSearch } from './omni.js';
 import { activate } from './actions.js';
+import { recordUse } from './frecency.js';
 
 const MAX_SUGGESTIONS = 7;
 
@@ -120,9 +121,14 @@ export async function renderSearchBar(container) {
     paint();
   };
 
+  const choose = (item, options) => {
+    recordUse(item, input.value);
+    activate(item, options);
+  };
+
   const submit = (event) => {
     if (cursor >= 0 && suggestions[cursor]) {
-      activate(suggestions[cursor], { newTab: event?.ctrlKey || event?.metaKey });
+      choose(suggestions[cursor], { newTab: event?.ctrlKey || event?.metaKey });
       return;
     }
     const { engine, query } = parsePrefix(input.value, engines);
@@ -164,7 +170,7 @@ export async function renderSearchBar(container) {
             },
             onMousedown: (event) => {
               event.preventDefault();
-              activate(item, { newTab: event.ctrlKey || event.metaKey });
+              choose(item, { newTab: event.ctrlKey || event.metaKey });
             },
           },
           suggestIcon(item),

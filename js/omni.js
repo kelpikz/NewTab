@@ -4,6 +4,7 @@
 import { hasApi, hasPermissions } from './platform.js';
 import { getGroups, getRoutines } from './storage.js';
 import { rank } from './fuzzy.js';
+import { loadUsage, boostFor } from './frecency.js';
 import { urlKey, hostOf } from './util.js';
 
 export const OPTIONAL_SOURCES = ['tabs', 'bookmarks', 'history', 'topSites'];
@@ -155,7 +156,7 @@ export function dedupe(items) {
  */
 export async function search(query, { commands = [], limit = 24 } = {}) {
   const trimmed = query.trim();
-  const [local, tabId] = await Promise.all([localItems(), currentTabId()]);
+  const [local, tabId, usage] = await Promise.all([localItems(), currentTabId(), loadUsage()]);
   const [tabs, bookmarks, history, top] = await Promise.all([
     tabItems(tabId),
     bookmarkItems(trimmed),
@@ -164,6 +165,11 @@ export async function search(query, { commands = [], limit = 24 } = {}) {
   ]);
 
   const pool = [...commands, ...local, ...tabs, ...bookmarks, ...history, ...top];
+  // What you picked before for this query counts as much as a good name match.
+  const now = Date.now();
+  pool.forEach((item) => {
+    item.boost = (item.boost ?? 0) + boostFor(usage, item, trimmed, now);
+  });
 
   if (!trimmed) {
     const ordered = pool

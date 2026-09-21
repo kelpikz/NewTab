@@ -10,6 +10,7 @@ const TASKS_KEY = 'tasks';
 const SETTINGS_KEY = 'settings';
 const NOTES_KEY = 'notes';
 const FOCUS_KEY = 'dailyFocus';
+const USAGE_KEY = 'usage';
 
 const clone = (value) => structuredClone(value);
 
@@ -311,12 +312,22 @@ export async function saveDailyFocus(focus) {
   await local.set({ [FOCUS_KEY]: { ...focus, date: todayKey() } });
 }
 
+/** What the palette has learned about which rows get picked. */
+export async function getUsage() {
+  const result = await local.get(USAGE_KEY);
+  return result[USAGE_KEY] ?? {};
+}
+
+export async function saveUsage(usage) {
+  await local.set({ [USAGE_KEY]: usage });
+}
+
 /* ------------------------------------------------------------------ */
 /* Backup                                                              */
 /* ------------------------------------------------------------------ */
 
 const SYNC_KEYS = [SETTINGS_KEY, GROUPS_KEY, ENGINES_KEY, ROUTINES_KEY, TASKS_KEY];
-const LOCAL_KEYS = [NOTES_KEY, FOCUS_KEY, ACTIVE_GROUP_KEY];
+const LOCAL_KEYS = [NOTES_KEY, FOCUS_KEY, ACTIVE_GROUP_KEY, USAGE_KEY];
 
 export async function exportData() {
   const [syncData, localData] = await Promise.all([sync.get(SYNC_KEYS), local.get(LOCAL_KEYS)]);

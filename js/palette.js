@@ -5,6 +5,7 @@ import { el, faviconNode, debounce, asUrl, copyText, toast } from './util.js';
 import { search, groupResults, OPTIONAL_SOURCES } from './omni.js';
 import { answer } from './answers.js';
 import { activate } from './actions.js';
+import { recordUse } from './frecency.js';
 import { getEngines } from './storage.js';
 import { buildSearchUrl } from './engines.js';
 import { hasPermissions, requestPermissions, openUrl } from './platform.js';
@@ -184,7 +185,9 @@ const refreshSoon = debounce(refresh, 90);
 
 async function run(item, options) {
   if (!item) return;
+  const query = inputEl.value;
   if (!item.keepOpen) close();
+  recordUse(item, query);
   await activate(item, options);
 }
 
