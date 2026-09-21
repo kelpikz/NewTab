@@ -76,13 +76,17 @@ export const FEATURES = [
   {
     title: 'Around the edges',
     items: [
+      {
+        name: 'Calendar',
+        text: 'Paste the secret .ics address of a Google Calendar to see what is next.',
+      },
       { name: 'Weather', text: 'Now, and five days ahead. Click the reading for the rest.' },
       { name: 'Background', keys: 'B', text: 'A new photo, a gradient, a colour or your own image.' },
       { name: 'Appearance', text: 'Dark, light or match the system, with an accent you pick.' },
       { name: 'Backup', text: 'Settings → Data writes everything to a file and reads it back.' },
       {
         name: 'Nothing leaves',
-        text: 'Only the photo and weather services are ever called. No account, no tracking.',
+        text: 'Only the photo, weather and calendar addresses are ever called. No account, no tracking.',
       },
     ],
   },

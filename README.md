@@ -1,8 +1,11 @@
 # My New Tab
 
 A Chrome new tab replacement: quick links, a command palette that also does
-sums, weather with a forecast, tasks, habits, countdowns, notes and a focus
-timer. No build step, no dependencies, no tracking.
+sums, weather with a forecast, your calendar, tasks, habits, countdowns,
+notes, a focus timer, and a pause in front of the sites that eat your day.
+No build step, no dependencies, no tracking.
+
+Press `?` at any time for a sheet that lists everything it does.
 
 ## Install
 
@@ -110,11 +113,50 @@ it does not drop just because today is not done yet.
 Days you are counting towards — a trip, a release, a birthday. The nearest one
 sits at the top, and days that have passed sink to the bottom.
 
+### Time you lose
+
+Name a site that eats your day — `youtube.com`, `instagram.com` — in the
+**Time** widget. From then on, opening it from this tab shows a short pause
+first: the site, how many times you have been there today, how long you have
+spent, and a question. The **Open anyway** button only wakes up after a few
+seconds. `Esc`, or **Not now**, keeps you here.
+
+Give a site a daily limit of visits or minutes in **Settings → Widgets →
+Time**. The count turns amber near the limit and red past it.
+
+**Count the minutes** turns on a background worker that adds up the time the
+watched sites are in front of you. It is off until you ask for it, it needs
+the `tabs` permission, and it records nothing about any site that is not on
+your list. Turn it off and the worker goes back to doing nothing.
+
+Visits are counted for pages opened from this tab. Minutes are counted
+wherever you opened the page.
+
+### Calendar
+
+Paste a calendar feed address and the next few days appear in the **Calendar**
+widget, with the event that is running now picked out.
+
+In Google Calendar: **Settings → your calendar → Secret address in iCal
+format**. Nothing is signed in to and no account is linked — the page fetches
+that one address. It is a secret, so it stays on this device and is left out
+of the backup file.
+
+A time carries a zone name that only a full timezone database could resolve,
+so times are read on this machine's clock. That is right whenever your
+calendar and your computer agree on the timezone.
+
 ### Focus timer
 
 A pomodoro timer in the top bar. It remembers its end time, so it keeps
 counting even if you close and reopen the tab. It only runs while a new tab is
-open — there is no background worker.
+open — nothing counts it down in the background.
+
+### One screen
+
+The widgets sit in a **deck**: a row of tabs with one card under them, so the
+page always fits without scrolling. `W` steps to the next one. Prefer to see
+them all at once? **Settings → Widgets → Layout → All at once**.
 
 ### Appearance
 
@@ -131,8 +173,9 @@ own image, with dim and blur sliders. Every widget can be turned off.
 | Keys | Action |
 | --- | --- |
 | `Ctrl`/`Cmd` + `K` | Command palette |
+| `W` | Show the next widget |
 | `/` | Jump to the search bar |
-| `?` | Show the shortcut list |
+| `?` | What this tab does |
 | `1`–`9` | Open a quick link (`Shift` for a new tab) |
 | `Shift` + `←`/`→` | Switch tab group |
 | `B` | Load a new background photo |
@@ -145,10 +188,12 @@ own image, with dim and blur sliders. Every widget can be turned off.
 | Permission | Why |
 | --- | --- |
 | `storage`, `unlimitedStorage` | Your links, settings and the cached background |
+| `alarms` | Wakes the time worker once a minute, and only when you turn it on |
 | `favicon` | Site icons from Chrome's own cache instead of a third party |
 | `picsum.photos` | Background photos |
+| `calendar.google.com` | Only the calendar address you paste |
 | `open-meteo.com` | Weather and city search |
-| `tabs`, `bookmarks`, `history`, `topSites` | **Optional.** Palette search, saving open tabs as a routine, and filling a new tile from a tab. Only if you turn them on |
+| `tabs`, `bookmarks`, `history`, `topSites` | **Optional.** Palette search, saving open tabs as a routine, filling a new tile from a tab, and counting minutes. Only if you turn them on |
 
 ## Development
 
@@ -165,6 +210,7 @@ when jsdom is missing.
 
 ```
 manifest.json          Extension manifest (MV3)
+worker.js              Background worker: counts minutes, nothing else
 newtab.html            Page markup
 css/base.css           Design tokens, reset, buttons, dialogs
 css/app.css            Layout and components
@@ -184,9 +230,16 @@ js/quicklinks.js       Quick link tiles, groups, drag and drop
 js/clock.js            Clock and greeting
 js/focus.js            Daily focus
 js/weather.js          Open-Meteo client and icons
+js/calendar.js         Calendar widget
+js/ical.js             Reads an .ics feed, including repeats
 js/tasks.js            Task list
 js/habits.js           Habit tracker
 js/countdowns.js       Countdowns
+js/mindful.js          The pause in front of a watched site
+js/timelog.js          Visits and seconds per site per day
+js/screentime.js       The Time widget
+js/deck.js             Widget tabs and the two layouts
+js/guide.js            The "what this tab does" sheet
 js/notes.js            Scratchpad
 js/timer.js            Focus timer
 js/routines.js         Routines widget

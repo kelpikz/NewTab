@@ -39,6 +39,10 @@ Do not start a dev server. There is nothing to serve — load the folder at
 | `js/omni.js` | Gathers palette and suggestion candidates |
 | `js/answers.js` | Sums and unit conversions; pure, no DOM |
 | `js/frecency.js` | Remembers which palette rows get picked |
+| `js/timelog.js` | Visits and seconds per site; no DOM, shared with the worker |
+| `js/deck.js` | Widget tabs and the two widget layouts |
+| `js/guide.js` | The feature list behind `?` |
+| `worker.js` | Background worker: counts minutes, and nothing else |
 | `scripts/check.js` | Static checks |
 | `tests/` | Unit tests and a jsdom page test |
 
@@ -71,10 +75,19 @@ it at all.
 `history` and `topSites` stay in `optional_permissions`, and the code degrades
 to nothing when they are missing.
 
-**Nothing leaves the device** except the two hosts the manifest names
-(picsum.photos for photos, open-meteo.com for weather). No analytics, no
+**Nothing leaves the device** except the hosts the manifest names
+(picsum.photos for photos, open-meteo.com for weather, calendar.google.com
+for the one feed address the user pastes). No analytics, no
 fonts from a CDN, no third-party favicon service — icons come from Chrome's
 own cache through `faviconUrl()`.
+
+**The background worker stays tiny and DOM-free.** It only counts minutes on
+the watch list, only when the user turns it on. Anything it imports must work
+without a `document`; `npm run check` walks its imports and fails otherwise.
+Put shared logic in `js/timelog.js`, never in `js/util.js`.
+
+**Add a feature, add a line to `js/guide.js`.** That sheet is how a person
+finds out the feature exists.
 
 **No new runtime dependencies.** Ever.
 
@@ -84,10 +97,12 @@ own cache through `faviconUrl()`.
 2. `<div id="<name>" class="widget-slot"></div>` in `newtab.html`.
 3. A `widgets.<name>: true` default in `DEFAULT_SETTINGS`.
 4. A row in `widgetsPanel()` in `js/settings.js`.
-5. `dom.<name>`, a `show()` line and a render call in `refreshLayout()` in
-   `js/main.js`.
-6. Styles in `css/app.css`.
-7. Unit tests for the widget's pure parts in `tests/<name>.test.js`, and a
+5. `dom.<name>` and a render call in `refreshLayout()` in `js/main.js`, plus
+   the slot in the `applyDeck()` call. The deck decides what is on show, so no
+   `show()` line is needed for a deck widget.
+6. `DECK_WIDGETS` and `LABELS` in `js/deck.js`.
+7. Styles in `css/app.css`.
+8. Unit tests for the widget's pure parts in `tests/<name>.test.js`, and a
    round trip through the page in `tests/page.test.js`.
 
 `npm run check` fails if an id or a CSS class is missing, which catches

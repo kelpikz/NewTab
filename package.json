@@ -1,6 +1,6 @@
 {
   "name": "my-new-tab",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "type": "module",
   "description": "Chrome new tab replacement. No build step; the extension loads the source directly.",
