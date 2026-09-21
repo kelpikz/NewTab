@@ -413,9 +413,9 @@ function paletteCommands() {
     },
     {
       type: 'command',
-      glyph: '⌨',
-      title: 'Show keyboard shortcuts',
-      keywords: ['keys', 'help'],
+      glyph: '?',
+      title: 'What can this tab do?',
+      keywords: ['help', 'keys', 'shortcuts', 'features', 'guide'],
       run: () => keyboard.toggleHelp(),
     },
     {
@@ -508,6 +508,7 @@ async function start() {
   keyboard = initShortcuts({
     dialog: document.getElementById('shortcuts-dialog'),
     list: document.getElementById('shortcuts-list'),
+    guide: document.getElementById('guide-list'),
     closeBtn: document.getElementById('close-shortcuts'),
     handlers: {
       openPalette: () => openPalette(),
@@ -534,6 +535,12 @@ async function start() {
 
   await refreshLayout();
   document.body.classList.add('ready');
+
+  // The first time this page ever opens, say what it can do.
+  if (!settings().seenGuide) {
+    await updateSettings({ seenGuide: true });
+    keyboard.toggleHelp();
+  }
 }
 
 start();

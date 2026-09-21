@@ -24,6 +24,7 @@ const clone = (value) => structuredClone(value);
 
 export const DEFAULT_SETTINGS = {
   name: '',
+  seenGuide: false,
   theme: 'dark', // dark | light | auto
   accent: '#7c9cff',
   clock: { show: true, format: '24', seconds: false, greeting: true },

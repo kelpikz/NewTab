@@ -227,10 +227,16 @@ describe('new tab page', { skip }, () => {
     assert.ok(!page.$('.suggest-list').classList.contains('open'));
   });
 
-  test('the shortcut sheet lists every shortcut', async () => {
+  test('the guide lists every feature and every shortcut', async () => {
     await page.press('?');
     assert.equal(page.$('#shortcuts-dialog').open, true);
     assert.equal(page.$$('.shortcut-row').length, 10);
+    assert.ok(page.$$('.guide-group').length >= 5, 'the feature groups are listed');
+    assert.ok(page.$$('.guide-row').length >= 20, 'every feature has a line');
+    assert.ok(
+      page.$$('.guide-name').some((node) => node.textContent === 'Instant answers'),
+      'a feature added later is in the guide'
+    );
     await page.press('Escape');
     assert.equal(page.$('#shortcuts-dialog').open, false);
   });
@@ -289,6 +295,18 @@ describe('new tab page', { skip }, () => {
     await page.click('#close-settings');
     await page.wait(200);
     assert.equal(page.$$('.engine-menu-item').length, 4);
+  });
+
+  test('the guide opens by itself the first time only', async () => {
+    const first = await loadPage();
+    assert.equal(first.$('#shortcuts-dialog').open, true, 'shown on a fresh profile');
+    const settings = JSON.parse(first.window.localStorage.getItem('newtab:sync:settings'));
+    assert.equal(settings.seenGuide, true);
+    first.dispose();
+
+    const again = await loadPage({ seed: { sync: { settings } } });
+    assert.equal(again.$('#shortcuts-dialog').open, false, 'not shown again');
+    again.dispose();
   });
 
   test('nothing threw along the way', () => {

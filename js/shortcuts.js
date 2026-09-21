@@ -1,4 +1,5 @@
 import { el, isTypingTarget } from './util.js';
+import { renderGuide } from './guide.js';
 
 const mod = (event) => event.ctrlKey || event.metaKey;
 
@@ -20,7 +21,7 @@ export function shortcutList(handlers) {
     },
     {
       keys: ['?'],
-      label: 'Show this list',
+      label: 'Show this sheet',
       match: (event) => event.key === '?',
       run: () => handlers.toggleHelp(),
     },
@@ -78,9 +79,10 @@ function keyRow(shortcut) {
   return el('div', { class: 'shortcut-row' }, el('span', { text: shortcut.label }), keys);
 }
 
-export function initShortcuts({ dialog, list, closeBtn, handlers }) {
+export function initShortcuts({ dialog, list, guide, closeBtn, handlers }) {
   const shortcuts = shortcutList(handlers);
   list.replaceChildren(...shortcuts.map(keyRow));
+  if (guide) renderGuide(guide);
   closeBtn.addEventListener('click', () => dialog.close());
 
   document.addEventListener('keydown', (event) => {

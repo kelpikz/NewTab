@@ -16,7 +16,7 @@
     <div class="topbar-right">
       <div id="timer" class="timer"></div>
       <button type="button" id="palette-button" class="icon-button" title="Command palette (Ctrl+K)" aria-label="Command palette">⌘</button>
-      <button type="button" id="shortcuts-button" class="icon-button" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">⌨</button>
+      <button type="button" id="shortcuts-button" class="icon-button" title="What this tab does (?)" aria-label="What this tab does">?</button>
       <button type="button" id="settings-button" class="icon-button" title="Settings (,)" aria-label="Settings">⚙</button>
     </div>
   </header>
@@ -113,10 +113,16 @@
 
   <dialog id="shortcuts-dialog" class="dialog shortcuts-dialog">
     <div class="settings-head">
-      <h2>Keyboard shortcuts</h2>
-      <button type="button" id="close-shortcuts" class="dialog-close" aria-label="Close shortcuts">✕</button>
+      <h2>What this tab does</h2>
+      <button type="button" id="close-shortcuts" class="dialog-close" aria-label="Close the guide">✕</button>
     </div>
-    <div id="shortcuts-list" class="shortcuts-list"></div>
+    <div class="guide-body">
+      <div id="guide-list" class="guide-list"></div>
+      <section class="guide-group">
+        <h3 class="guide-title">Keyboard</h3>
+        <div id="shortcuts-list" class="shortcuts-list"></div>
+      </section>
+    </div>
   </dialog>
 
   <script type="module" src="js/main.js"></script>
