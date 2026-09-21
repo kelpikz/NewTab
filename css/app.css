@@ -2536,7 +2536,7 @@ body.ready .content {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: 300px;
+  width: 290px;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -2567,17 +2567,23 @@ body.ready .content {
   display: none;
 }
 
+/* A strip along the top edge of the card, clear of its own buttons. */
 .widget-grip {
   position: absolute;
-  top: 6px;
-  right: 8px;
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 2;
-  padding: 2px 4px;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 12px;
+  padding: 0;
   border: none;
   border-radius: 6px;
   background: transparent;
   color: var(--text-faint);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1;
   cursor: grab;
   opacity: 0;
@@ -2589,9 +2595,14 @@ body.ready .content {
   opacity: 1;
 }
 
-.widget-grip:hover {
+.widget-grip:hover,
+.widget-grip:active {
   color: var(--text);
   background: var(--glass-hover);
+}
+
+.widget-grip:active {
+  cursor: grabbing;
 }
 
 .widget-holder.dragging {

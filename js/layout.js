@@ -35,8 +35,12 @@ export const LABELS = {
 
 export const ZONES = ['left', 'deck', 'right'];
 
-/** Below this the rails would crowd the middle, so they stand down. */
-export const RAIL_MIN_WIDTH = 1380;
+/**
+ * Below this the rails would sit on top of the search bar, so they stand
+ * down: the middle is about 780px wide, and each rail asks for 290 plus a
+ * margin either side.
+ */
+export const RAIL_MIN_WIDTH = 1440;
 
 /* ------------------------------------------------------------------ */
 /* Working out the zones                                               */

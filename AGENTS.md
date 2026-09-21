@@ -40,7 +40,7 @@ Do not start a dev server. There is nothing to serve — load the folder at
 | `js/answers.js` | Sums and unit conversions; pure, no DOM |
 | `js/frecency.js` | Remembers which palette rows get picked |
 | `js/timelog.js` | Visits and seconds per site; no DOM, shared with the worker |
-| `js/deck.js` | Widget tabs and the two widget layouts |
+| `js/layout.js` | Widget zones, deck tabs and drag to arrange |
 | `js/guide.js` | The feature list behind `?` |
 | `worker.js` | Background worker: counts minutes, and nothing else |
 | `scripts/check.js` | Static checks |
@@ -100,7 +100,8 @@ finds out the feature exists.
 5. `dom.<name>` and a render call in `refreshLayout()` in `js/main.js`, plus
    the slot in the `applyDeck()` call. The deck decides what is on show, so no
    `show()` line is needed for a deck widget.
-6. `DECK_WIDGETS` and `LABELS` in `js/deck.js`.
+6. `WIDGET_KEYS` and `LABELS` in `js/layout.js`, and a `.widget-holder`
+   wrapper with a grip in `newtab.html`.
 7. Styles in `css/app.css`.
 8. Unit tests for the widget's pure parts in `tests/<name>.test.js`, and a
    round trip through the page in `tests/page.test.js`.

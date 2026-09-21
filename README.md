@@ -152,11 +152,22 @@ A pomodoro timer in the top bar. It remembers its end time, so it keeps
 counting even if you close and reopen the tab. It only runs while a new tab is
 open — nothing counts it down in the background.
 
-### One screen
+### Arrange it your way
 
-The widgets sit in a **deck**: a row of tabs with one card under them, so the
-page always fits without scrolling. `W` steps to the next one. Prefer to see
-them all at once? **Settings → Widgets → Layout → All at once**.
+The page has three places for cards: a rail down the left, the middle, and a
+rail down the right.
+
+Hover a card and a grip appears on its top edge. Drag it to either rail, drop
+it on another card to sit in front of it, or drag it back to the middle. Or
+set the side of each card in **Settings → Widgets → Cards**.
+
+Cards in the middle sit in a **deck**: a row of tabs with one card under them,
+so the page fits without scrolling. `W` steps to the next one. Prefer them all
+at once? **Settings → Widgets → Layout → All at once**.
+
+A window under about 1440px has no room for rails, so their cards go back to
+the middle until there is room again. What you chose is remembered either
+way.
 
 ### Appearance
 
@@ -238,7 +249,7 @@ js/countdowns.js       Countdowns
 js/mindful.js          The pause in front of a watched site
 js/timelog.js          Visits and seconds per site per day
 js/screentime.js       The Time widget
-js/deck.js             Widget tabs and the two layouts
+js/layout.js           Zones, the deck tabs and dragging cards about
 js/guide.js            The "what this tab does" sheet
 js/notes.js            Scratchpad
 js/timer.js            Focus timer

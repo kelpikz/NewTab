@@ -57,6 +57,10 @@ export const FEATURES = [
       { name: 'Notes', keys: 'N', text: 'A scratchpad that saves itself. Stays on this device.' },
       { name: 'Focus timer', text: 'A pomodoro in the top bar. It survives closing the tab.' },
       { name: 'Widget deck', keys: 'W', text: 'One card at a time, so the page fits one screen.' },
+      {
+        name: 'Arrange the cards',
+        text: 'Drag a card by the grip on its top edge into the left or right rail.',
+      },
     ],
   },
   {
