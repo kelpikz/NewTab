@@ -55,6 +55,12 @@ export function shortcutList(handlers) {
       run: () => handlers.focusTasks(),
     },
     {
+      keys: ['W'],
+      label: 'Show the next widget',
+      match: (event) => event.key.toLowerCase() === 'w' && !mod(event),
+      run: () => handlers.cycleWidget(1),
+    },
+    {
       keys: [','],
       label: 'Open settings',
       match: (event) => event.key === ',' && !mod(event),

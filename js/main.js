@@ -27,10 +27,13 @@ import { renderWeather } from './weather.js';
 import { renderTasks } from './tasks.js';
 import { renderHabits } from './habits.js';
 import { renderCountdowns } from './countdowns.js';
+import { renderScreenTime } from './screentime.js';
+import { onVisitCounted } from './mindful.js';
 import { renderNotes } from './notes.js';
 import { renderTimer } from './timer.js';
 import { initPalette, openPalette, reloadEngines } from './palette.js';
 import { initShortcuts } from './shortcuts.js';
+import { applyDeck, cycleWidget, showWidget } from './deck.js';
 import { el, toast, faviconNode, hostOf, asUrl } from './util.js';
 import { answer } from './answers.js';
 import { currentWindowTabs, requestPermissions, hasPermissions, hasApi } from './platform.js';
@@ -45,9 +48,11 @@ const dom = {
   tasks: document.getElementById('tasks'),
   habits: document.getElementById('habits'),
   countdowns: document.getElementById('countdowns'),
+  mindful: document.getElementById('mindful'),
   notes: document.getElementById('notes'),
   routines: document.getElementById('routines'),
   widgets: document.getElementById('widgets'),
+  widgetTabs: document.getElementById('widget-tabs'),
   weather: document.getElementById('weather'),
   timer: document.getElementById('timer'),
 };
@@ -150,17 +155,18 @@ async function refreshLayout() {
   show(dom.focus, widgets.focus);
   show(dom.search, widgets.search);
   show(dom.quicklinks, widgets.quicklinks);
-  show(dom.tasks, widgets.tasks);
-  show(dom.habits, widgets.habits);
-  show(dom.countdowns, widgets.countdowns);
-  show(dom.notes, widgets.notes);
-  show(dom.routines, widgets.routines);
   show(dom.weather, widgets.weather);
   show(dom.timer, widgets.timer);
   show(
     dom.widgets,
-    widgets.tasks || widgets.habits || widgets.countdowns || widgets.notes || widgets.routines
+    widgets.tasks ||
+      widgets.habits ||
+      widgets.countdowns ||
+      widgets.mindful ||
+      widgets.notes ||
+      widgets.routines
   );
+  dom.widgets.classList.toggle('deck', settings().widgetLayout === 'deck');
 
   await Promise.all([
     refreshClock(),
@@ -170,11 +176,27 @@ async function refreshLayout() {
     widgets.tasks ? renderTasks(dom.tasks) : null,
     widgets.habits ? renderHabits(dom.habits) : null,
     widgets.countdowns ? renderCountdowns(dom.countdowns) : null,
+    widgets.mindful ? renderScreenTime(dom.mindful) : null,
     refreshNotes(),
     widgets.routines ? renderRoutines(dom.routines) : null,
     refreshWeather(),
     refreshTimer(),
   ]);
+
+  // The deck decides which cards are on show, so it runs after they are drawn.
+  await applyDeck({
+    tabsEl: dom.widgetTabs,
+    slots: {
+      tasks: dom.tasks,
+      habits: dom.habits,
+      countdowns: dom.countdowns,
+      mindful: dom.mindful,
+      notes: dom.notes,
+      routines: dom.routines,
+    },
+    widgets,
+    layout: settings().widgetLayout,
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -463,6 +485,7 @@ async function start() {
   refreshBackground();
 
   initRoutineDialog(() => renderRoutines(dom.routines));
+  onVisitCounted(() => settings().widgets.mindful && renderScreenTime(dom.mindful));
   initPalette({ getCommands: paletteCommands, getQueryCommands: queryCommands });
 
   initSettings({
@@ -494,8 +517,15 @@ async function start() {
       cycleGroup,
       openLink: (position, options) => openQuicklink(position, options),
       newPhoto: () => refreshBackground(true),
-      focusNotes: () => notesHandle?.focus(),
-      focusTasks: () => document.querySelector('.task-input')?.focus(),
+      focusNotes: () => {
+        showWidget('notes');
+        notesHandle?.focus();
+      },
+      focusTasks: () => {
+        showWidget('tasks');
+        document.querySelector('.task-input')?.focus();
+      },
+      cycleWidget,
     },
   });
 

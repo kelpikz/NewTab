@@ -16,6 +16,9 @@ describe('new tab page', { skip }, () => {
 
   after(() => page?.dispose());
 
+  const openWidget = (label) =>
+    page.click(page.$$('.widget-tab').find((tab) => tab.textContent === label));
+
   test('renders every widget', () => {
     assert.match(page.text('.clock-time'), /^\d{2}:\d{2}$/);
     assert.match(page.text('.clock-line'), /Good (morning|afternoon|evening|night)/);
@@ -52,6 +55,8 @@ describe('new tab page', { skip }, () => {
   });
 
   test('adds a habit, ticks today and counts the run', async () => {
+    await openWidget('Habits');
+    assert.equal(page.$('#habits').hidden, false);
     const input = page.$('.habit-input');
     input.value = 'Read';
     await page.press('Enter', { target: '.habit-input' });
@@ -73,6 +78,7 @@ describe('new tab page', { skip }, () => {
   });
 
   test('adds a countdown and says how far off it is', async () => {
+    await openWidget('Countdowns');
     const name = page.$('.countdown-input');
     const date = page.$('.countdown-date-input');
     const soon = new Date();
@@ -91,7 +97,55 @@ describe('new tab page', { skip }, () => {
     assert.equal(page.$$('.countdown').length, 0);
   });
 
+  test('the deck shows one widget at a time', async () => {
+    assert.deepEqual(
+      page.$$('.widget-tab').map((tab) => tab.textContent),
+      ['Tasks', 'Habits', 'Countdowns', 'Time', 'Notes', 'Routines']
+    );
+    assert.equal(page.$$('.widget-slot:not([hidden])').length, 1);
+
+    await openWidget('Notes');
+    assert.equal(page.$('#notes').hidden, false);
+    assert.equal(page.$('#tasks').hidden, true);
+    assert.equal(page.$$('.widget-tab.active')[0].textContent, 'Notes');
+
+    // "W" steps to the next tab; "T" jumps straight back to the tasks card.
+    await page.press('w');
+    assert.equal(page.$('#routines').hidden, false);
+    await page.press('w');
+    assert.equal(page.$('#tasks').hidden, false, 'the tabs wrap around');
+    await page.press('t');
+    assert.equal(page.$('#tasks').hidden, false);
+  });
+
+  test('a watched site pauses before it opens', async () => {
+    await openWidget('Time');
+    const watch = page.$('.st-input');
+    watch.value = 'example.com';
+    await page.press('Enter', { target: '.st-input' });
+    assert.equal(page.text('.st-host'), 'example.com');
+
+    // The palette offers the address; opening it must not leave the page yet.
+    await page.press('k', { ctrlKey: true });
+    await page.fill('.pal-input', 'example.com');
+    await page.click(page.$$('.pal-row')[0]);
+    await page.wait(150);
+
+    assert.ok(page.$('.mind-scrim'), 'the pause is shown');
+    assert.equal(page.text('.mind-host'), 'example.com');
+    assert.equal(page.text('.mind-sum'), '1st visit today');
+    assert.equal(page.$('.mind-go').disabled, true, 'opening waits a few seconds');
+
+    await page.click(page.$$('.mind-actions .btn').find((b) => b.textContent === 'Not now'));
+    assert.equal(page.$('.mind-scrim'), null, 'the pause is gone');
+    assert.equal(page.text('.st-stat'), '0 visits', 'a visit you did not make is not counted');
+
+    await page.click('.st-remove');
+    await page.wait(150);
+  });
+
   test('saves notes while typing', async () => {
+    await openWidget('Notes');
     await page.fill('.notes-area', 'buy coffee');
     await page.wait(600);
     assert.equal(page.window.localStorage.getItem('newtab:local:notes'), '"buy coffee"');
@@ -176,7 +230,7 @@ describe('new tab page', { skip }, () => {
   test('the shortcut sheet lists every shortcut', async () => {
     await page.press('?');
     assert.equal(page.$('#shortcuts-dialog').open, true);
-    assert.equal(page.$$('.shortcut-row').length, 9);
+    assert.equal(page.$$('.shortcut-row').length, 10);
     await page.press('Escape');
     assert.equal(page.$('#shortcuts-dialog').open, false);
   });
@@ -204,6 +258,9 @@ describe('new tab page', { skip }, () => {
     assert.equal(page.document.documentElement.dataset.theme, 'light');
 
     await page.click(page.$$('.set-tab').find((tab) => tab.textContent === 'Widgets'));
+    // The first select in this panel is the layout; the grid shows every card.
+    await page.change('#settings-panel .set-select', 'grid');
+    assert.equal(page.$('#widget-tabs').hidden, true);
     const notesToggle = page.$$('.set-row').find((r) => r.textContent.startsWith('Notes'));
     await page.click(notesToggle.querySelector('input'));
     await page.wait(200);
@@ -215,6 +272,9 @@ describe('new tab page', { skip }, () => {
     assert.equal(page.$('#notes').hidden, false);
     assert.notEqual(page.displayOf('#notes'), 'none');
 
+    await page.change('#settings-panel .set-select', 'deck');
+    await page.wait(200);
+    assert.equal(page.$('#widget-tabs').hidden, false);
     await page.click('#close-settings');
   });
 

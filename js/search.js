@@ -5,6 +5,7 @@ import { buildSearchUrl, parsePrefix, engineIconNode } from './engines.js';
 import { search as omniSearch } from './omni.js';
 import { activate } from './actions.js';
 import { recordUse } from './frecency.js';
+import { allowVisit } from './mindful.js';
 
 const MAX_SUGGESTIONS = 7;
 
@@ -126,7 +127,7 @@ export async function renderSearchBar(container) {
     activate(item, options);
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     if (cursor >= 0 && suggestions[cursor]) {
       choose(suggestions[cursor], { newTab: event?.ctrlKey || event?.metaKey });
       return;
@@ -135,6 +136,7 @@ export async function renderSearchBar(container) {
     const text = query.trim();
     if (!text) return;
     const direct = asUrl(text);
+    if (direct && !(await allowVisit(direct))) return;
     window.location.href = direct ?? buildSearchUrl(engine ?? selectedEngine, text);
   };
 

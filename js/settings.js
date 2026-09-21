@@ -360,6 +360,7 @@ function widgetsPanel(rerender) {
     ['tasks', 'Tasks'],
     ['habits', 'Habits'],
     ['countdowns', 'Countdowns'],
+    ['mindful', 'Time'],
     ['notes', 'Notes'],
     ['routines', 'Routines'],
     ['weather', 'Weather'],
@@ -367,6 +368,22 @@ function widgetsPanel(rerender) {
   ];
 
   return [
+    section(
+      'Layout',
+      row(
+        'Widget layout',
+        select(
+          [
+            ['deck', 'One at a time'],
+            ['grid', 'All at once'],
+          ],
+          config.widgetLayout,
+          (value) => set({ widgetLayout: value }, actions.refreshLayout),
+          'Widget layout'
+        ),
+        'A deck keeps the page on one screen'
+      )
+    ),
     section(
       'Show or hide',
       ...items.map(([key, label]) =>

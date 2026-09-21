@@ -13,6 +13,8 @@ const SETTINGS_KEY = 'settings';
 const NOTES_KEY = 'notes';
 const FOCUS_KEY = 'dailyFocus';
 const USAGE_KEY = 'usage';
+const ACTIVE_WIDGET_KEY = 'activeWidget';
+const VISITS_KEY = 'visitLog';
 
 const clone = (value) => structuredClone(value);
 
@@ -33,6 +35,7 @@ export const DEFAULT_SETTINGS = {
     blur: 0,
     refresh: 'hourly', // tab | hourly | daily | never
   },
+  widgetLayout: 'deck', // deck | grid
   widgets: {
     clock: true,
     focus: true,
@@ -41,12 +44,16 @@ export const DEFAULT_SETTINGS = {
     tasks: true,
     habits: true,
     countdowns: true,
+    mindful: true,
     notes: true,
     routines: true,
     weather: true,
     timer: true,
   },
   weather: { place: null, units: 'metric' },
+  // Sites you want to think twice about. Times are per device, so the list
+  // syncs but the tally does not.
+  mindful: { enabled: true, pause: 5, sites: [] },
   timer: { focusMin: 25, breakMin: 5, chime: true },
 };
 
@@ -334,6 +341,26 @@ export async function saveDailyFocus(focus) {
   await local.set({ [FOCUS_KEY]: { ...focus, date: todayKey() } });
 }
 
+/** Visits and seconds per site per day: { '2026-09-22': { 'youtube.com': … } }. */
+export async function getVisitLog() {
+  const result = await local.get(VISITS_KEY);
+  return result[VISITS_KEY] ?? {};
+}
+
+export async function saveVisitLog(log) {
+  await local.set({ [VISITS_KEY]: log });
+}
+
+/** The widget tab last opened in the deck layout. */
+export async function getActiveWidget() {
+  const result = await local.get(ACTIVE_WIDGET_KEY);
+  return result[ACTIVE_WIDGET_KEY] ?? null;
+}
+
+export async function setActiveWidget(key) {
+  await local.set({ [ACTIVE_WIDGET_KEY]: key });
+}
+
 /** What the palette has learned about which rows get picked. */
 export async function getUsage() {
   const result = await local.get(USAGE_KEY);
@@ -349,7 +376,7 @@ export async function saveUsage(usage) {
 /* ------------------------------------------------------------------ */
 
 const SYNC_KEYS = [SETTINGS_KEY, GROUPS_KEY, ENGINES_KEY, ROUTINES_KEY, TASKS_KEY, HABITS_KEY, COUNTDOWNS_KEY];
-const LOCAL_KEYS = [NOTES_KEY, FOCUS_KEY, ACTIVE_GROUP_KEY, USAGE_KEY];
+const LOCAL_KEYS = [NOTES_KEY, FOCUS_KEY, ACTIVE_GROUP_KEY, USAGE_KEY, ACTIVE_WIDGET_KEY, VISITS_KEY];
 
 export async function exportData() {
   const [syncData, localData] = await Promise.all([sync.get(SYNC_KEYS), local.get(LOCAL_KEYS)]);

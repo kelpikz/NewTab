@@ -9,6 +9,7 @@ import {
 } from './storage.js';
 import { el, faviconNode } from './util.js';
 import { openUrl } from './platform.js';
+import { allowVisit } from './mindful.js';
 
 let dragData = null;
 let lastRender = null;
@@ -60,7 +61,18 @@ function tileAction({ className, text, title, onClick }) {
 }
 
 function createLinkTile(link, index, groupId, { onEdit, onRemove, onReorder }) {
-  const tile = el('a', { class: 'quicklink', href: link.url, title: link.url });
+  // A real link, so the middle button and the status bar still work, but a
+  // plain click goes through the watch list first.
+  const tile = el('a', {
+    class: 'quicklink',
+    href: link.url,
+    title: link.url,
+    onClick: async (event) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+      event.preventDefault();
+      if (await allowVisit(link.url)) openUrl(link.url);
+    },
+  });
 
   makeDraggable(tile, () => ({ type: 'link', groupId, index }));
   makeDropTarget(tile, {
@@ -221,5 +233,5 @@ export async function openQuicklink(position, { newTab = false } = {}) {
   const activeId = (await getActiveGroupId()) ?? groups[0]?.id;
   const active = groups.find((group) => group.id === activeId);
   const link = active?.links[position - 1];
-  if (link) openUrl(link.url, { newTab });
+  if (link && (await allowVisit(link.url))) openUrl(link.url, { newTab });
 }

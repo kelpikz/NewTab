@@ -1,4 +1,5 @@
 import { hasApi, openUrl } from './platform.js';
+import { allowVisit } from './mindful.js';
 
 export function openRoutine(routine) {
   if (!routine?.urls?.length) return;
@@ -37,5 +38,5 @@ export async function activate(item, { newTab = false } = {}) {
     await focusTab(item);
     return;
   }
-  if (item.url) openUrl(item.url, { newTab });
+  if (item.url && (await allowVisit(item.url))) openUrl(item.url, { newTab });
 }

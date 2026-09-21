@@ -9,6 +9,7 @@ import { recordUse } from './frecency.js';
 import { getEngines } from './storage.js';
 import { buildSearchUrl } from './engines.js';
 import { hasPermissions, requestPermissions, openUrl } from './platform.js';
+import { allowVisit } from './mindful.js';
 
 let root = null;
 let inputEl = null;
@@ -136,7 +137,9 @@ function directUrlRow(query) {
       glyph: '↗',
       title: `Open ${url}`,
       subtitle: 'Go to this address',
-      run: ({ newTab } = {}) => openUrl(url, { newTab }),
+      run: async ({ newTab } = {}) => {
+        if (await allowVisit(url)) openUrl(url, { newTab });
+      },
     },
   ];
 }
