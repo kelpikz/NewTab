@@ -52,6 +52,19 @@ export function describeCode(code, isDay = true) {
   return match ? { label: match[1], icon: match[2] } : { label: 'Unknown', icon: 'cloud' };
 }
 
+/** What a moving background should show for a weather code. */
+export function skyFor(code) {
+  const icon = describeCode(code).icon;
+  return { rain: 'rain', storm: 'rain', snow: 'snow', fog: 'fog', cloud: 'cloud' }[icon] ?? null;
+}
+
+/** The sky from the last saved reading, without a request. Old readings count as none. */
+export async function savedSky() {
+  const stored = (await local.get(CACHE_KEY))[CACHE_KEY];
+  if (!stored?.data || Date.now() - stored.fetchedAt > 3 * 60 * 60 * 1000) return null;
+  return skyFor(stored.data.code);
+}
+
 export async function geocode(name) {
   const url = `${GEOCODE_URL}?name=${encodeURIComponent(name)}&count=6&language=en&format=json`;
   const response = await fetch(url);

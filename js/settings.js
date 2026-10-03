@@ -131,7 +131,25 @@ function accentPicker(config) {
 
 function backgroundControls(config, rerender) {
   const source = config.background.source;
-  const items = [];
+  const items = [
+    row(
+      'Source',
+      select(
+        [
+          ['photo', 'Random photo'],
+          ['gradient', 'Gradient'],
+          ['solid', 'Solid colour'],
+          ['custom', 'Your own image'],
+        ],
+        source,
+        (value) => set({ background: { source: value } }, () => {
+          actions.refreshBackground?.();
+          rerender();
+        }),
+        'Background source'
+      )
+    ),
+  ];
 
   if (source === 'gradient') {
     items.push(
@@ -224,6 +242,28 @@ function backgroundControls(config, rerender) {
   return items;
 }
 
+function sceneControls(config, rerender) {
+  const { look } = config.background;
+  const change = (patch) => set({ background: patch }, () => {
+    actions.refreshBackground?.();
+    rerender();
+  });
+  return [
+    row(
+      'Look',
+      select(
+        [
+          ['smooth', 'Smooth'],
+          ['pixel', 'Pixel'],
+        ],
+        look,
+        (value) => change({ look: value }),
+        'Look'
+      )
+    ),
+  ];
+}
+
 function appearancePanel(rerender) {
   const config = settings();
   return [
@@ -247,23 +287,18 @@ function appearancePanel(rerender) {
     section(
       'Background',
       row(
-        'Source',
-        select(
-          [
-            ['photo', 'Random photo'],
-            ['gradient', 'Gradient'],
-            ['solid', 'Solid colour'],
-            ['custom', 'Your own image'],
-          ],
-          config.background.source,
-          (value) => set({ background: { source: value } }, () => {
+        'Animated',
+        toggle(
+          config.background.animated,
+          (on) => set({ background: { animated: on } }, () => {
             actions.refreshBackground?.();
             rerender();
           }),
-          'Background source'
-        )
+          'Animated background'
+        ),
+        'A koi pond in place of a picture. It stops when the tab is hidden.'
       ),
-      ...backgroundControls(config, rerender),
+      ...(config.background.animated ? sceneControls(config, rerender) : backgroundControls(config, rerender)),
       row(
         'Dim',
         slider({

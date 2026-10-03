@@ -42,6 +42,10 @@ Do not start a dev server. There is nothing to serve — load the folder at
 | `js/timelog.js` | Visits and seconds per site; no DOM, shared with the worker |
 | `js/layout.js` | Widget zones, deck tabs and drag to arrange |
 | `js/guide.js` | The feature list behind `?` |
+| `js/scene.js` | Runs a moving background: canvas, size, frame clock, pointer |
+| `js/shader.js` | WebGL 2 shaders: shared noise, the pixel look, off-screen targets, shapes made of triangles, and compiling in the background |
+| `js/koi.js` | The koi pond painted in 2D; the pond's layers, and the scene used when there is no GPU |
+| `js/pond.js` | The koi pond under a WebGL 2 water surface; the only scene |
 | `worker.js` | Background worker: counts minutes, and nothing else |
 | `scripts/check.js` | Static checks |
 | `tests/` | Unit tests and a jsdom page test |
@@ -90,6 +94,33 @@ Put shared logic in `js/timelog.js`, never in `js/util.js`.
 finds out the feature exists.
 
 **No new runtime dependencies.** Ever.
+
+## Adding a scene
+
+1. `js/<name>.js` exporting `createScene(ctx, env)`. The contract is at the
+   top of `js/scene.js`: `resize()`, `frame()`, and an optional `tap()`.
+   For a GPU scene, also export `context = 'webgl2'` and build the shader
+   with `program()` from `js/shader.js`, which adds the shared noise and
+   `finish()`. For more than one pass, draw into a `target()`. For a
+   detailed picture, draw it once with paths on a 2D `sheet()` when the
+   size changes, upload it, and let the shader bend it a little each frame,
+   as `pond.js` does with the floor from `koi.js`. For points or other shapes, give `program()` a vertex
+   shader too. Shaders compile in the background; the runner waits for them
+   and fades the scene in. If WebGL 2 is missing or a shader fails, the 2D koi pond runs instead.
+2. An entry in `SCENES` in `js/background.js`, with a label and one line of
+   text. With two or more scenes, add a Scene picker back to
+   `sceneControls()` in `js/settings.js`.
+3. Add it to the list in `tests/scenes.test.js`, which runs every scene in
+   both looks against a fake canvas.
+
+Keep a frame under about 1 ms on a laptop, for the main thread and for the
+GPU. Paint whatever does not move into an off-screen `sheet()` once, draw at
+the lowest `resolution` that still looks right, and allocate nothing per
+frame that you can keep. On the GPU, keep loops short and upload a canvas
+only when it changes; one full-screen upload costs more than most shaders.
+Work that changes slowly can be drawn small, or a part at a time, and kept
+in a target. Give long loops a uniform for their count (`whole()`): some
+drivers unroll fixed loops and then take seconds to compile.
 
 ## Adding a widget
 

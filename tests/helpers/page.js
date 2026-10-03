@@ -52,6 +52,8 @@ export async function loadPage({ fetchImpl, seed } = {}) {
   };
 
   window.Element.prototype.scrollIntoView ??= function () {};
+  // jsdom has no canvas; say so quietly instead of logging an error.
+  window.HTMLCanvasElement.prototype.getContext = () => null;
   // jsdom opens a 1024px window; a desktop is wider, and the rails need room.
   Object.defineProperty(window, 'innerWidth', { value: 1600, configurable: true });
   window.matchMedia ??= () => ({ matches: false, addEventListener() {} });

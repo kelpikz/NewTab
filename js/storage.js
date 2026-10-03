@@ -37,6 +37,9 @@ export const DEFAULT_SETTINGS = {
     dim: 0.3,
     blur: 0,
     refresh: 'hourly', // tab | hourly | daily | never
+    animated: false, // a moving scene in place of the source
+    scene: 'pond', // the only scene
+    look: 'smooth', // smooth | pixel
   },
   widgetLayout: 'deck', // deck | grid, for the middle of the page
   widgetOrder: [], // the order cards sit in; empty means the order they ship

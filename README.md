@@ -175,6 +175,19 @@ Dark, light or match-system. Seven accent colours or your own. Backgrounds
 from [picsum.photos](https://picsum.photos), a gradient, a solid colour or your
 own image, with dim and blur sliders. Every widget can be turned off.
 
+**Animated** replaces the picture with a moving koi pond. Pick a smooth or a
+pixel look.
+
+| Scene | What it does |
+| --- | --- |
+| Koi pond | Koi swim over a bed of stones under lily pads, in real water. Each koi has a round, scaled body in a classic coat, fins that paddle and a tail that flutters; deep koi turn blue and soft, and each throws a shadow on the floor. Ripples spread, cross and bend the view, light lines move on the floor and over the koi, and the koi leave a wake. The light follows the clock, from a warm dawn to a blue night with fireflies. When your weather says rain, snow or fog, the pond shows it. Rest the pointer and a koi comes to look; move it to draw a wake; click to scare the koi off. |
+
+The water is drawn by the GPU with WebGL 2. The floor and the pads are
+painted once and kept. It runs at 30 frames a second or less and stops when
+the tab is hidden. With reduced motion on, you get one still frame. On a
+device with no usable GPU, the pond is drawn without water on a plain 2D
+canvas.
+
 ### Backup
 
 **Settings → Data** exports everything to a JSON file and imports it back.
@@ -256,6 +269,10 @@ js/timer.js            Focus timer
 js/routines.js         Routines widget
 js/routine-dialog.js   Add/edit routine dialog
 js/background.js       Background sources and caching
+js/scene.js            Runs a moving background: canvas, size, clock, pointer
+js/shader.js           One full-screen WebGL 2 shader, with shared noise
+js/koi.js              The koi pond painted in 2D: floor, koi and pads
+js/pond.js             Scene: the koi pond under a water surface
 js/settings.js         Settings dialog
 js/controls.js         Form controls for the settings dialog
 js/card.js             Widget card shell

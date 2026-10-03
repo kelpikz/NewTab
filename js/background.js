@@ -1,8 +1,41 @@
 import { local } from './platform.js';
+import { savedSky } from './weather.js';
 
 const PHOTO_URL = 'https://picsum.photos/1920/1080';
 const CACHE_KEY = 'backgroundImage';
 const CUSTOM_KEY = 'customBackground';
+const SCENE_BASE = '#0b1220';
+
+// Moving backgrounds. A scene's code only loads when it is picked.
+export const SCENES = {
+  pond: {
+    label: 'Koi pond',
+    text: 'Koi in real water. Ripples bend the light, and the rain falls when it rains outside.',
+    load: () => import('./pond.js'),
+  },
+};
+
+// The running scene: which one it is, and a promise of the function that
+// stops it.
+let live = null;
+
+async function loadScene(layer, name, look) {
+  const [{ startScene }, scene, weather] = await Promise.all([
+    import('./scene.js'),
+    (SCENES[name] ?? SCENES.pond).load(),
+    savedSky(),
+  ]);
+  // The 2D koi pond needs no GPU, so it stands in when a shader cannot run.
+  const koi = async () => startScene(layer, await import('./koi.js'), { look, weather });
+  return startScene(layer, scene, { look, weather, fallback: koi }) ?? koi();
+}
+
+async function stopScene() {
+  if (!live) return;
+  const running = live.stop;
+  live = null;
+  (await running)();
+}
 
 export const GRADIENTS = {
   aurora: 'linear-gradient(140deg, #1b2a4a 0%, #3b2c63 45%, #7d3f6d 100%)',
@@ -82,7 +115,7 @@ export async function clearCustomImage() {
  * `force` fetches a new photo even when the cache is fresh.
  */
 export async function applyBackground(layer, config, { force = false } = {}) {
-  const { source, gradient, color, dim, blur, refresh } = config.background;
+  const { source, gradient, color, dim, blur, refresh, animated, scene, look } = config.background;
   const root = document.documentElement;
   root.style.setProperty('--bg-dim', String(dim));
   root.style.setProperty('--bg-blur', `${blur}px`);
@@ -92,6 +125,18 @@ export async function applyBackground(layer, config, { force = false } = {}) {
     layer.style.backgroundImage = isImage ? `url("${value}")` : value;
     layer.style.backgroundColor = isImage ? '' : value;
   };
+
+  if (animated) {
+    paint(SCENE_BASE, false);
+    const key = `${scene}:${look}`;
+    if (live?.key !== key) {
+      await stopScene();
+      live = { key, stop: loadScene(layer, scene, look) };
+    }
+    await live.stop;
+    return null;
+  }
+  await stopScene();
 
   if (source === 'solid') {
     paint(color, false);

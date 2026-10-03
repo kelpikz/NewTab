@@ -315,6 +315,30 @@ describe('new tab page', { skip }, () => {
     await page.click('#close-settings');
   });
 
+  test('a moving scene takes the place of the picture and gives it back', async () => {
+    await page.click('#settings-button');
+    await page.click(page.$$('.set-tab').find((tab) => tab.textContent === 'Appearance'));
+    const settingRow = (label) => page.$$('.set-row').find((r) => r.textContent.startsWith(label));
+    assert.ok(settingRow('Source'));
+    assert.equal(settingRow('Scene'), undefined);
+
+    await page.click(settingRow('Animated').querySelector('input'));
+    await page.wait(200);
+    assert.equal(page.$$('#background canvas.scene').length, 1);
+    assert.equal(settingRow('Source'), undefined, 'the source does not apply to a scene');
+
+    await page.change(settingRow('Look').querySelector('select'), 'pixel');
+    await page.wait(150);
+    assert.ok(page.$('#background canvas.scene.scene-pixel'));
+
+    await page.click(settingRow('Animated').querySelector('input'));
+    await page.wait(200);
+    assert.equal(page.$('#background canvas.scene'), null);
+    assert.match(page.$('#background').style.backgroundImage, /linear-gradient/);
+    assert.ok(settingRow('Source'));
+    await page.click('#close-settings');
+  });
+
   test('a search engine can be added', async () => {
     await page.click('#settings-button');
     await page.click(page.$$('.set-tab').find((tab) => tab.textContent === 'Search'));
