@@ -1,4 +1,4 @@
-import { sheet, minuteOfDay, hexToRgb } from './scene.js';
+import { sheet, minuteOfDay, hexToRgb, clamp } from './scene.js';
 import { program } from './shader.js';
 import { createScene as createKoi, lightAt } from './koi.js';
 
@@ -25,6 +25,7 @@ uniform sampler2D u_web;
 uniform vec2 u_cell;
 uniform float u_light;
 uniform vec3 u_glint;
+uniform float u_moon;
 uniform vec4 u_spine[${MAXK * 5}];
 uniform vec4 u_fish[${MAXK}];
 uniform vec4 u_reach[${MAXK}];
@@ -119,9 +120,14 @@ vec3 coat(int k, float along, float across, float seed) {
   vec3 ink = u_colors[k * 3 + 2];
   vec2 bp = vec2(along * 5.5, across * 1.1) + seed;
   float mottle = noise(bp) * 0.65 + noise(bp * 2.3 + 7.0) * 0.35;
-  float red = smoothstep(0.5, 0.55, mottle) * smoothstep(0.02, 0.06, along) * (1.0 - smoothstep(0.8, 0.88, along));
+  // The red has clean edges, with a thin darker line just inside each one.
+  // Koi with no markings keep their plain colour.
+  float band = smoothstep(0.02, 0.06, along) * (1.0 - smoothstep(0.8, 0.88, along));
+  float red = smoothstep(0.5, 0.515, mottle) * band;
+  float rim = (1.0 - smoothstep(0.0, 0.03, abs(mottle - 0.52))) * band * step(0.001, distance(spot, base));
   float sumi = smoothstep(0.66, 0.7, noise(vec2(along * 9.0, across * 2.4) + seed * 3.0)) * step(0.12, along);
-  return mix(mix(base, spot, red), ink, sumi);
+  vec3 redTone = mix(spot, spot * 0.7, rim * 0.6);
+  return mix(mix(base, redTone, red), ink, sumi);
 }
 
 // Bright lines where the light from the surface gathers on the floor: two
@@ -157,7 +163,19 @@ void main() {
 
   float lines = caustic(p * 6.5 + slope * 4.0, t);
   float focus = clamp(-bend * 3.0, -0.3, 0.6);
-  below *= 1.0 + (lines * 0.32 + focus * 0.5) * u_light;
+  // Clouds drift over and dim the floor a little in the sun. Gusts sweep
+  // across the water and ruffle it, so it catches more light where they pass.
+  float cloud = noise(p * 0.9 + vec2(t * 0.012, -t * 0.008) + 3.0);
+  float gust = noise(p * 1.4 + vec2(-t * 0.05, t * 0.03) + 11.0);
+  float daylight = smoothstep(0.55, 0.9, u_light);
+  float ruffle = smoothstep(0.5, 0.75, gust);
+  below *= 1.0 + (lines * (0.32 + ruffle * 0.2) + focus * 0.5) * u_light;
+  below *= 1.0 - smoothstep(0.45, 0.7, cloud) * daylight * 0.25;
+  // Sun comes through the leaves above in soft patches that drift and sway.
+  // The spots are bright, and the rest of the floor is a little in shade.
+  float leaves = noise(p * 13.0 + vec2(t * 0.03, -t * 0.02) + slope * 3.0) * 0.6
+    + noise(p * 27.0 - vec2(t * 0.05, t * 0.04)) * 0.4;
+  below *= (1.0 - daylight * 0.08) * (1.0 + smoothstep(0.55, 0.65, leaves) * daylight * 0.45);
 
   // Each koi throws a shadow on the floor, lit from the upper left: close
   // and sharp under a deep koi, wide and soft under one near the top.
@@ -208,7 +226,7 @@ void main() {
     float scale = smoothstep(0.5, 0.25, length(fract(sc) - 0.5));
     float glitter = info.w * pow(hash12(floor(sc) + info.z), 6.0) * (0.5 + 0.5 * sin(t * 2.0 + info.z * 9.0 + sc.x));
     vec3 skin = coat(k, along, across, info.z);
-    skin *= diffuse * (0.6 + 0.4 * z) * (0.94 + 0.08 * scale);
+    skin *= diffuse * (0.6 + 0.4 * z) * (0.84 + 0.18 * scale);
     skin += vec3(1.0, 0.97, 0.9) * (shine * (0.3 + info.w * 0.5) + glitter * 0.6);
     // Two dark eyes near the nose.
     vec2 nose = spine(k, 0);
@@ -230,9 +248,16 @@ void main() {
 
   vec3 n = normalize(vec3(-slope * 22.0, 1.0));
   vec3 sun = normalize(vec3(-0.35, 0.45, 0.82));
-  float glint = pow(max(dot(n, normalize(sun + vec3(0.0, 0.0, 1.0))), 0.0), 260.0);
+  float glint = pow(max(dot(n, normalize(sun + vec3(0.0, 0.0, 1.0))), 0.0), 260.0) * (1.0 + ruffle * 2.0);
   float sky = pow(1.0 - n.z, 1.5);
   vec3 col = below + u_glint * (glint * 0.7 + sky * 0.12);
+  // The moon lies on the water as a pale pool at the top right, with glints
+  // in it. Outside the pool the water stays dark.
+  vec3 moonHalf = normalize(normalize(vec3(0.45, 0.4, 0.8)) + vec3(0.0, 0.0, 1.0));
+  float moonFacing = max(dot(n, moonHalf), 0.0);
+  vec2 fromMoon = (uv - vec2(0.68, 0.72)) * vec2(u_res.x / u_res.y, 1.0);
+  float pool = exp(-dot(fromMoon, fromMoon) * 7.0);
+  col += vec3(0.62, 0.74, 1.0) * u_moon * pool * (pow(moonFacing, 40.0) * 0.3 + pow(moonFacing, 320.0) * 0.9);
 
   // Pads float, so they ride the waves a little but are not bent.
   vec4 above = texture(u_above, tex + shift * 0.25);
@@ -363,6 +388,7 @@ export function createScene(gl, env) {
     above: aboveCtx,
     fresh: false,
     drop: (x, y, size) => drop(x, y, size, Math.min(1.2, size / (cellPx * 6))),
+    wake: (x, y, power) => drop(x, y, cellPx * 2, power),
     stir(x, y, push) {
       const i = Math.round(x / cellPx);
       const j = Math.round(y / cellPx);
@@ -454,6 +480,9 @@ export function createScene(gl, env) {
         const level = (light.tint[0] + light.tint[1] + light.tint[2]) / 765;
         const dim = env.weather === 'rain' || env.weather === 'cloud' ? 0.6 : 1;
         shader.set('u_light', level * dim);
+        // The moon shows once the light has fallen to night.
+        const night = clamp((level * dim - 0.5) / 0.3, 0, 1);
+        shader.set('u_moon', 1 - night * night * (3 - 2 * night));
         // Glints are a sharp sky light. Under cloud there is little of it.
         shader.set('u_glint', ...light.glow.map((v) => (v / 255) * level * level * dim * dim * dim));
         // The koi take the same light as the floor, and sink into the

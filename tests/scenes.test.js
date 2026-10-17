@@ -115,6 +115,13 @@ test('the pond is clear at noon and dark with fireflies at midnight', () => {
   assert.equal(midnight.flies, 1);
 });
 
+test('the lotus is shut at night and open by day', () => {
+  assert.equal(koi.bloomAt(0), 0);
+  assert.equal(koi.bloomAt(12 * 60), 1);
+  assert.equal(koi.bloomAt(23 * 60), 0);
+  assert.ok(koi.bloomAt(8 * 60) > 0 && koi.bloomAt(8 * 60) < 1, 'it opens over the morning');
+});
+
 test('a koi spine keeps its links the same length', () => {
   const points = [
     { x: 10, y: 0 },

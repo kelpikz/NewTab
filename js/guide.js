@@ -90,6 +90,14 @@ export const FEATURES = [
         name: 'Koi pond',
         text: 'Settings → Appearance → Animated. A moving koi pond, smooth or pixel. Click empty space, or move the pointer over the water.',
       },
+      {
+        name: 'Pond life',
+        text: 'Frogs hop between the lily pads, and turtles glide under the water. Lotus flowers open by day and shut at night. Water lilies float on some pads.',
+      },
+      {
+        name: 'Light on the water',
+        text: 'Sun comes through the leaves above as spots that drift over the pond floor by day. At night the moon lays a pale pool on the water.',
+      },
       { name: 'Appearance', text: 'Dark, light or match the system, with an accent you pick.' },
       { name: 'Backup', text: 'Settings → Data writes everything to a file and reads it back.' },
       {

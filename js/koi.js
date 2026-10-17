@@ -1,4 +1,5 @@
-import { rand, pick, rgb, sheet, blendByMinute, minuteOfDay, hexToRgb } from './scene.js';
+import { rand, pick, rgb, sheet, blendByMinute, minuteOfDay, hexToRgb, clamp } from './scene.js';
+import { makeFrogs, updateFrogs, frogPose, drawFrog, makeTurtles, updateTurtles, drawTurtle } from './wildlife.js';
 
 // A koi pond seen from above, painted on a 2D canvas. The world is measured
 // in pond units of four screen pixels. The pixel look draws one canvas pixel
@@ -7,9 +8,10 @@ import { rand, pick, rgb, sheet, blendByMinute, minuteOfDay, hexToRgb } from './
 // the living things.
 //
 // On its own this is the whole pond. The GPU pond in pond.js gives it
-// `env.water`: then the pads and the dragonfly go on `env.water.above`, the
+// `env.water`: then the pads, frogs and dragonfly go on `env.water.above`, the
 // floor goes on `ctx` to be seen through the waves, ripples go to the water
 // itself, and the koi are handed over in `water.fish` for the GPU to draw.
+// The turtles go on the floor with the koi.
 
 const UNIT = 4; // screen pixels per pond unit
 const TILE = 96; // size of the light net on the pond floor, in units
@@ -40,9 +42,26 @@ const COATS = [
 // Body width along the spine, head first.
 const PROFILE = [0.8, 1, 1, 0.92, 0.8, 0.64, 0.48, 0.34, 0.24];
 
+// Things that drift on the water: pink blossom, and a few leaves blown in
+// from the trees.
+const FLOATERS = [
+  { shape: 'blossom', count: 6, size: 2.1, color: '#fbd3e0', eye: '#f3c969' },
+  { shape: 'leaf', count: 4, size: 2.6, color: '#e3a24a', eye: '#8a4f1e' },
+];
+
 /** The pond light for a minute of the day. Minutes wrap. */
 export function lightAt(minutes) {
   return blendByMinute(LIGHT, minutes);
+}
+
+function ease(x) {
+  const v = clamp(x, 0, 1);
+  return v * v * (3 - 2 * v);
+}
+
+/** How far the lotus flowers are open: 0 shut, 1 fully open. Open from 7 to 17. */
+export function bloomAt(minutes) {
+  return ease((minutes - 420) / 120) * (1 - ease((minutes - 1020) / 120));
 }
 
 /** Pull each point to a fixed distance behind the one before it. */
@@ -206,7 +225,8 @@ function placePads(W, H) {
     const x = W / 2 + Math.cos(angle) * (W / 2) * reach;
     const y = H / 2 + Math.sin(angle) * (H / 2) * reach;
     const r = rand(10, 22);
-    pads.push({ x, y, r, notch: rand(0, Math.PI * 2), lotus: r > 14 && Math.random() < 0.35 });
+    const lotus = r > 14 && Math.random() < 0.35;
+    pads.push({ x, y, r, notch: rand(0, Math.PI * 2), lotus, lily: !lotus && Math.random() < 0.3 });
     if (Math.random() < 0.6) {
       const side = rand(0, Math.PI * 2);
       pads.push({
@@ -228,24 +248,49 @@ function padPath(c, x, y, r, notch) {
   c.closePath();
 }
 
-function paintLotus(c, x, y) {
-  for (let k = 0; k < 7; k++) {
-    const a = (k / 7) * Math.PI * 2;
-    c.fillStyle = '#ef8fb0';
+// A lotus is a closed bud at night and opens by day. It is painted with the
+// light of the minute, so it changes once a minute, not every frame.
+function paintLotus(c, x, y, bloom, paint) {
+  if (bloom < 0.05) {
+    c.fillStyle = paint('#ef8fb0');
     c.beginPath();
-    c.ellipse(x + Math.cos(a) * 2.6, y + Math.sin(a) * 2.6, 3, 1.4, a, 0, Math.PI * 2);
+    c.ellipse(x, y, 1.6, 2.6, 0, 0, Math.PI * 2);
+    c.fill();
+    return;
+  }
+  const open = 0.35 + 0.65 * bloom;
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2;
+    c.fillStyle = paint('#ef8fb0');
+    c.beginPath();
+    c.ellipse(x + Math.cos(a) * 3 * open, y + Math.sin(a) * 3 * open, 3.4 * open, 1.5 * open + 0.4, a, 0, Math.PI * 2);
     c.fill();
   }
   for (let k = 0; k < 5; k++) {
     const a = (k / 5) * Math.PI * 2 + 0.3;
-    c.fillStyle = '#ffd3e2';
+    c.fillStyle = paint('#ffd3e2');
     c.beginPath();
-    c.ellipse(x + Math.cos(a) * 1.4, y + Math.sin(a) * 1.4, 1.8, 0.9, a, 0, Math.PI * 2);
+    c.ellipse(x + Math.cos(a) * 1.4 * open, y + Math.sin(a) * 1.4 * open, 1.9 * open, 0.9 * open, a, 0, Math.PI * 2);
     c.fill();
   }
-  c.fillStyle = '#f5b73b';
+  c.fillStyle = paint('#f5b73b');
   c.beginPath();
   c.arc(x, y, 0.9, 0, Math.PI * 2);
+  c.fill();
+}
+
+// A water lily lies flat on the water: pale petals round a yellow heart.
+function paintWaterLily(c, x, y, petal) {
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2;
+    c.fillStyle = petal;
+    c.beginPath();
+    c.ellipse(x + Math.cos(a) * 2.2, y + Math.sin(a) * 2.2, 2.4, 1.2, a, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.fillStyle = '#f5c542';
+  c.beginPath();
+  c.arc(x, y, 1, 0, Math.PI * 2);
   c.fill();
 }
 
@@ -268,9 +313,7 @@ function paintDuckweed(c, x, y, spread, smooth) {
   }
 }
 
-function paintPads(c, W, H, smooth) {
-  const pads = placePads(W, H);
-
+function paintPads(c, W, H, smooth, pads) {
   c.fillStyle = 'rgba(4, 34, 30, 0.38)';
   pads.forEach((p) => {
     padPath(c, p.x + 3, p.y + 4, p.r, p.notch);
@@ -324,7 +367,7 @@ function paintPads(c, W, H, smooth) {
         c.fill();
       }
     }
-    if (p.lotus) paintLotus(c, p.x + rand(-3, 3), p.y + rand(-3, 3));
+    if (p.lily) paintWaterLily(c, p.x + rand(-2, 2), p.y + rand(-2, 2), pick(['#fbfdf4', '#f7c9d6']));
   });
 
   const clumps = Math.round((W + H) / 120) + 2;
@@ -360,13 +403,19 @@ function makeKoi(W, H) {
   const x = rand(W * 0.2, W * 0.8);
   const y = rand(H * 0.2, H * 0.8);
   const coat = pick(COATS);
+  // The chain is the true spine. The points are the chain with the tail beat
+  // added, and they are what gets drawn.
+  const chain = PROFILE.map((_, i) => ({ x: x - Math.cos(angle) * gap * i, y: y - Math.sin(angle) * gap * i }));
   return {
-    points: PROFILE.map((_, i) => ({ x: x - Math.cos(angle) * gap * i, y: y - Math.sin(angle) * gap * i })),
+    chain,
+    points: chain.map((p) => ({ ...p })),
     gap,
     width: length * 0.17,
     angle,
     speed: rand(5, 9),
     boost: 0,
+    rate: 0,
+    wakeAt: null,
     phase: rand(0, 100),
     coat,
     curious: false,
@@ -382,7 +431,7 @@ function makeKoi(W, H) {
 }
 
 function swim(koi, t, dt, W, H, food) {
-  const head = koi.points[0];
+  const head = koi.chain[0];
   let turn = Math.sin(t * 0.23 + koi.phase) * 0.45 + Math.sin(t * 0.61 + koi.phase * 1.7) * 0.25;
   let pace = 1;
   const margin = 24;
@@ -401,7 +450,34 @@ function swim(koi, t, dt, W, H, food) {
   const heading = koi.angle + Math.sin(t * (3 + speed * 0.3) + koi.phase) * 0.15;
   head.x += Math.cos(heading) * speed * dt;
   head.y += Math.sin(heading) * speed * dt;
-  followChain(koi.points, koi.gap);
+  followChain(koi.chain, koi.gap);
+  koi.rate = speed;
+  bendSpine(koi, t);
+}
+
+// The tail beats from side to side. The beat runs forward along the body, so
+// the body bends as well. It is added to the chain, which is not changed.
+function bendSpine(koi, t) {
+  const { chain, points } = koi;
+  const last = chain.length - 1;
+  const reach = koi.width * (0.35 + 0.65 * Math.min(1, koi.rate / 12));
+  const beat = 5 + 0.5 * koi.rate;
+  chain.forEach((p, i) => {
+    const { px, py } = spineFrame(chain, i);
+    const bend = reach * (i / last) ** 2 * Math.sin(t * beat + koi.phase - i * 0.9);
+    points[i].x = p.x + px * bend;
+    points[i].y = p.y + py * bend;
+  });
+}
+
+// A moving koi leaves a trail of small rings from its tail. A new ring starts
+// each time the tail has moved about one wave cell.
+function wakeFrom(fish, water, k) {
+  const tail = fish.points[fish.points.length - 1];
+  const at = fish.wakeAt;
+  if (at && Math.hypot(tail.x - at.x, tail.y - at.y) < 1.2) return;
+  fish.wakeAt = { x: tail.x, y: tail.y };
+  water.wake(tail.x * k, tail.y * k, 0.05 * Math.min(1, fish.rate / 8));
 }
 
 // The direction a point on the spine faces, and the one at right angles.
@@ -582,6 +658,52 @@ function drawDragonfly(c, fly, t, paint) {
   draw(0, 0, paint('#2c7fb8'), 'rgba(225, 245, 255, 0.35)');
 }
 
+// The outline of a floater, turned by `turn`. Each petal starts its own arc,
+// so no stray line joins one petal to the next.
+function floatPath(c, shape, x, y, turn, r) {
+  if (shape === 'leaf') {
+    c.moveTo(x + Math.cos(turn) * r, y + Math.sin(turn) * r);
+    c.ellipse(x, y, r, r * 0.45, turn, 0, Math.PI * 2);
+    return;
+  }
+  for (let k = 0; k < 5; k++) {
+    const a = turn + (k / 5) * Math.PI * 2;
+    const cx = x + Math.cos(a) * r * 0.5;
+    const cy = y + Math.sin(a) * r * 0.5;
+    c.moveTo(cx + Math.cos(a) * r * 0.5, cy + Math.sin(a) * r * 0.5);
+    c.ellipse(cx, cy, r * 0.5, r * 0.3, a, 0, Math.PI * 2);
+  }
+}
+
+function drawFloater(c, f, snap, paint) {
+  const { shape, color, eye, size: r } = f.style;
+  const x = snap(f.x);
+  const y = snap(f.y);
+  c.fillStyle = 'rgba(4, 34, 30, 0.3)';
+  c.beginPath();
+  floatPath(c, shape, x + 1, y + 1.2, f.turn, r);
+  c.fill();
+  c.fillStyle = paint(color);
+  c.beginPath();
+  floatPath(c, shape, x, y, f.turn, r);
+  c.fill();
+  if (shape === 'leaf') {
+    const dx = Math.cos(f.turn) * r * 0.8;
+    const dy = Math.sin(f.turn) * r * 0.8;
+    c.strokeStyle = paint(eye);
+    c.lineWidth = 0.35;
+    c.beginPath();
+    c.moveTo(x - dx, y - dy);
+    c.lineTo(x + dx, y + dy);
+    c.stroke();
+  } else {
+    c.fillStyle = paint(eye);
+    c.beginPath();
+    c.arc(x, y, r * 0.22, 0, Math.PI * 2);
+    c.fill();
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* The scene                                                           */
 /* ------------------------------------------------------------------ */
@@ -597,7 +719,11 @@ export function createScene(ctx, env) {
   let netScale = 1;
   let mist = null;
   let koi = [];
-  let petals = [];
+  let floaters = [];
+  let padSpots = [];
+  let lotuses = [];
+  let frogs = [];
+  let turtles = [];
   let flies = [];
   let flakes = [];
   let ripples = [];
@@ -625,7 +751,9 @@ export function createScene(ctx, env) {
   };
 
   const relight = () => {
-    light = lightAt(minuteOfDay());
+    const minute = minuteOfDay();
+    light = lightAt(minute);
+    const bloom = bloomAt(minute);
     brightness = ((light.tint[0] + light.tint[1] + light.tint[2]) / 765) * dim;
     palette.clear();
     padsStale = true;
@@ -640,6 +768,11 @@ export function createScene(ctx, env) {
         // Multiply also paints the clear parts; cut them back out.
         c.globalCompositeOperation = 'destination-in';
         c.drawImage(source, 0, 0);
+        c.globalCompositeOperation = 'source-over';
+        c.save();
+        c.scale(k, k);
+        lotuses.forEach((p) => paintLotus(c, p.x, p.y, bloom, paint));
+        c.restore();
         return canvas;
       }
       c.globalCompositeOperation = 'screen';
@@ -664,10 +797,15 @@ export function createScene(ctx, env) {
     k = UNIT * scale;
     W = width / k;
     H = height / k;
-    const layers = [paintWater, paintPads].map((paintLayer) => {
+    padSpots = placePads(W, H);
+    lotuses = padSpots.filter((p) => p.lotus);
+    const layers = [
+      (c) => paintWater(c, W, H, smooth),
+      (c) => paintPads(c, W, H, smooth, padSpots),
+    ].map((paintLayer) => {
       const [canvas, c] = sheet(width, height);
       c.scale(k, k);
-      paintLayer(c, W, H, smooth);
+      paintLayer(c);
       return canvas;
     });
     raw = layers;
@@ -682,10 +820,13 @@ export function createScene(ctx, env) {
       mist = canvas;
     }
     koi = Array.from({ length: Math.round((W * H) / 22000) + 3 }, () => makeKoi(W, H));
-    petals = Array.from({ length: 6 }, () => ({
-      x: rand(0, W), y: rand(0, H), vx: rand(0.6, 1.8), vy: rand(-0.4, 0.4), phase: rand(0, 10),
-    }));
+    floaters = FLOATERS.flatMap((style) => Array.from({ length: style.count }, () => ({
+      style, x: rand(0, W), y: rand(0, H), vx: rand(0.6, 1.8), vy: rand(-0.4, 0.4), phase: rand(0, 10),
+      turn: rand(0, Math.PI * 2), spin: rand(-0.5, 0.5),
+    })));
     flies = Array.from({ length: 12 }, () => ({ x: rand(0, W), y: rand(0, H), phase: rand(0, 100) }));
+    frogs = makeFrogs(padSpots, 4);
+    turtles = makeTurtles(W, H, 2);
     flakes = weather === 'snow'
       ? Array.from({ length: 50 }, () => ({ x: rand(0, W), y: rand(0, H), life: rand(0, 1), size: rand(0.6, 1.3) }))
       : [];
@@ -710,7 +851,10 @@ export function createScene(ctx, env) {
 
     koi.forEach((fish) => swim(fish, t, dt, W, H, food));
     if (water) {
-      koi.forEach((fish) => water.stir(fish.points[0].x * k, fish.points[0].y * k, fish.boost + 2));
+      koi.forEach((fish) => {
+        water.stir(fish.points[0].x * k, fish.points[0].y * k, fish.boost + 2);
+        wakeFrom(fish, water, k);
+      });
       water.fish = koi;
       water.unit = k;
     }
@@ -740,11 +884,15 @@ export function createScene(ctx, env) {
     ripples.forEach((ring) => (ring.r += dt * ring.speed));
     ripples = ripples.filter((ring) => ring.r < ring.max);
 
-    petals.forEach((petal) => {
-      petal.x = ((petal.x + petal.vx * dt + W + 20) % (W + 20)) - 10;
-      petal.y = ((petal.y + petal.vy * dt + H + 20) % (H + 20)) - 10;
+    // Each floater drifts with the current, sways a little, and turns slowly.
+    floaters.forEach((f) => {
+      f.x = ((f.x + f.vx * dt + W + 20) % (W + 20)) - 10;
+      f.y = ((f.y + (f.vy + Math.sin(t * 0.5 + f.phase) * 0.3) * dt + H + 20) % (H + 20)) - 10;
+      f.turn += f.spin * dt;
     });
 
+    updateFrogs(frogs, padSpots, dt);
+    updateTurtles(turtles, dt, t, W, H);
     if (dragonfly && !moveDragonfly(dragonfly, dt)) dragonfly = null;
     nextDragonfly -= dt;
     if (!dragonfly && nextDragonfly <= 0 && light.flies < 0.6 && weather !== 'rain') {
@@ -790,11 +938,15 @@ export function createScene(ctx, env) {
       koi.forEach((fish) => drawKoi(ctx, fish, paint, smooth));
     }
 
-    // Pads, and the dragonfly that may land on one, float on top. On the
-    // water's own layer they are drawn again only when they change, since
-    // each fresh copy costs an upload to the GPU.
+    // Turtles swim under the water, so they are drawn before the pads.
+    turtles.forEach((turtle) => drawTurtle(ctx, turtle, t, paint));
+
+    // Pads, frogs and the dragonfly that may land on one float on top. On the
+    // water's own layer they are drawn again each frame while something on
+    // them moves, since each fresh copy costs an upload to the GPU.
     const top = water ? water.above : ctx;
-    if (!water || padsStale || dragonfly || flew) {
+    const hopping = frogs.some((frog) => frog.to >= 0);
+    if (!water || padsStale || dragonfly || flew || hopping) {
       top.setTransform(1, 0, 0, 1, 0, 0);
       if (water) {
         top.clearRect(0, 0, top.canvas.width, top.canvas.height);
@@ -802,33 +954,14 @@ export function createScene(ctx, env) {
       }
       top.drawImage(lit[1], 0, 0);
       top.setTransform(k, 0, 0, k, 0, 0);
+      frogs.forEach((frog) => drawFrog(top, frog, frogPose(frog, padSpots), paint));
       if (dragonfly) drawDragonfly(top, dragonfly, t, paint);
       padsStale = false;
-      flew = Boolean(dragonfly);
+      flew = Boolean(dragonfly) || hopping;
     }
     ctx.setTransform(k, 0, 0, k, 0, 0);
 
-    petals.forEach((petal) => {
-      const x = snap(petal.x);
-      const y = snap(petal.y);
-      const turn = Math.sin(t * 0.8 + petal.phase);
-      if (smooth) {
-        ctx.fillStyle = 'rgba(4, 34, 30, 0.3)';
-        ctx.beginPath();
-        ctx.ellipse(x + 1, y + 1.2, 1.4, 0.7, turn * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = paint('#f7c1d2');
-        ctx.beginPath();
-        ctx.ellipse(x, y, 1.4, 0.7, turn * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        return;
-      }
-      const wide = turn > 0;
-      ctx.fillStyle = 'rgba(4, 34, 30, 0.3)';
-      ctx.fillRect(x + 1, y + 1, wide ? 2 : 1, wide ? 1 : 2);
-      ctx.fillStyle = paint('#f7c1d2');
-      ctx.fillRect(x, y, wide ? 2 : 1, wide ? 1 : 2);
-    });
+    floaters.forEach((f) => drawFloater(ctx, f, snap, paint));
 
     ctx.lineWidth = smooth ? 0.4 : 1;
     ripples.forEach((ring) => {
@@ -897,6 +1030,12 @@ export function createScene(ctx, env) {
       const px = x / k;
       const py = y / k;
       ripple(px, py, 16);
+      // Small rings spill out from the splash.
+      for (let i = 0; i < 3; i++) {
+        const a = rand(0, Math.PI * 2);
+        const d = rand(8, 14);
+        ripple(px + Math.cos(a) * d, py + Math.sin(a) * d, rand(4, 6), 12);
+      }
       koi.forEach((fish) => {
         const head = fish.points[0];
         if (Math.hypot(head.x - px, head.y - py) > 45) return;
