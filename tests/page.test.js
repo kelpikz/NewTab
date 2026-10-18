@@ -148,6 +148,50 @@ describe('new tab page', { skip }, () => {
     await page.wait(150);
   });
 
+  test('a watched site can ask for a sentence, or stay closed', async () => {
+    await openWidget('Time');
+    page.$('.st-input').value = 'example.com';
+    await page.press('Enter', { target: '.st-input' });
+
+    const setMode = async (mode) => {
+      await page.click('#settings-button');
+      await page.click(page.$$('.set-tab').find((tab) => tab.textContent === 'Time'));
+      assert.equal(page.text('.watch-host'), 'example.com');
+      await page.change('.watch-row .set-select', mode);
+      await page.click('#close-settings');
+    };
+    const open = async () => {
+      await page.press('k', { ctrlKey: true });
+      await page.fill('.pal-input', 'example.com');
+      await page.click(page.$$('.pal-row')[0]);
+      await page.wait(150);
+    };
+    const button = (text) => page.$$('.mind-actions .btn').find((b) => b.textContent === text);
+
+    await setMode('type');
+    await open();
+    assert.equal(page.text('.mind-phrase'), 'I should not be doing this');
+    assert.equal(page.$('.mind-go').disabled, true, 'the way is shut until you type');
+    await page.fill('.mind-entry', 'i should not be doing this.');
+    assert.equal(page.$('.mind-go').disabled, false, 'the sentence opens the way');
+    await page.click(button('Not now'));
+    assert.equal(page.$('.mind-scrim'), null);
+
+    await setMode('block');
+    await open();
+    assert.equal(page.$('.mind-go'), null, 'a blocked site has no way in');
+    await page.click(button('Go back'));
+    assert.equal(page.$('.mind-scrim'), null);
+
+    await openWidget('Time');
+    await page.click(page.$$('.card-screentime .card-btn').find((b) => b.textContent === 'All'));
+    assert.match(page.text('.card-screentime .card-empty'), /Count every site/);
+    await page.click(page.$$('.card-screentime .card-btn').find((b) => b.textContent === 'Watched'));
+
+    await page.click('.st-remove');
+    await page.wait(150);
+  });
+
   test('a card can be dragged into a rail and back', async () => {
     assert.equal(page.$('#rail-right').hidden, true, 'a rail with nothing in it is not shown');
 
@@ -282,7 +326,7 @@ describe('new tab page', { skip }, () => {
   test('settings switch theme and hide widgets', async () => {
     await page.click('#settings-button');
     assert.equal(page.$('#settings-dialog').open, true);
-    assert.equal(page.$$('.set-tab').length, 5);
+    assert.equal(page.$$('.set-tab').length, 6);
 
     await page.click(page.$$('.set-tab').find((tab) => tab.textContent === 'Appearance'));
     await page.change('#settings-panel .set-select', 'light');

@@ -6,12 +6,12 @@
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "permissions": ["storage", "unlimitedStorage", "favicon", "alarms"],
+  "permissions": ["storage", "unlimitedStorage", "favicon", "alarms", "idle", "tabGroups"],
   "background": {
     "service_worker": "worker.js",
     "type": "module"
   },
-  "optional_permissions": ["tabs", "bookmarks", "history", "topSites"],
+  "optional_permissions": ["tabs", "bookmarks", "history", "topSites", "webNavigation"],
   "host_permissions": [
     "https://picsum.photos/*",
     "https://fastly.picsum.photos/*",

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Static checks that replace a build step: every element id the scripts look
-// up must exist in the HTML, every CSS class they set must exist in the CSS,
+// up must exist in a page, every CSS class they set must exist in the CSS,
 // and every file the manifest names must be on disk.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -10,7 +10,9 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path) => readFileSync(join(root, path), 'utf8');
 
-const html = read('newtab.html');
+const PAGES = ['newtab.html', 'gate.html'];
+const pages = PAGES.map((path) => ({ path, source: read(path) }));
+const html = pages.map((page) => page.source).join('\n');
 const jsFiles = readdirSync(join(root, 'js')).filter((name) => name.endsWith('.js'));
 const js = jsFiles.map((name) => ({ name, source: read(`js/${name}`) }));
 const css = ['css/base.css', 'css/app.css'].map(read).join('\n');
@@ -24,7 +26,7 @@ const collect = (source, pattern, group = 1) =>
 const htmlIds = new Set(collect(html, /\sid="([^"]+)"/g));
 js.forEach(({ name, source }) => {
   collect(source, /getElementById\(['"]([^'"]+)['"]\)/g).forEach((id) => {
-    if (!htmlIds.has(id)) problems.push(`js/${name}: no element with id "${id}" in newtab.html`);
+    if (!htmlIds.has(id)) problems.push(`js/${name}: no element with id "${id}" in any page`);
   });
 });
 
@@ -54,8 +56,10 @@ const manifest = JSON.parse(read('manifest.json'));
 if (!existsSync(join(root, manifest.chrome_url_overrides.newtab))) {
   problems.push(`manifest: ${manifest.chrome_url_overrides.newtab} is missing`);
 }
-collect(html, /(?:src|href)="([^":]+)"/g).forEach((path) => {
-  if (!existsSync(join(root, path))) problems.push(`newtab.html: ${path} is missing`);
+pages.forEach((page) => {
+  collect(page.source, /(?:src|href)="([^":]+)"/g).forEach((path) => {
+    if (!existsSync(join(root, path))) problems.push(`${page.path}: ${path} is missing`);
+  });
 });
 
 /* 4. Imports resolve ---------------------------------------------- */

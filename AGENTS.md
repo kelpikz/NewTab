@@ -28,6 +28,7 @@ Do not start a dev server. There is nothing to serve — load the folder at
 | --- | --- |
 | `manifest.json` | MV3 manifest |
 | `newtab.html` | All markup, including every `<dialog>` |
+| `gate.html` | The gate and time-out page the worker shows in any tab |
 | `css/base.css` | Design tokens, reset, buttons, dialogs |
 | `css/app.css` | Layout and components |
 | `js/main.js` | Entry point: theme, layout, dialogs, wiring |
@@ -39,14 +40,18 @@ Do not start a dev server. There is nothing to serve — load the folder at
 | `js/omni.js` | Gathers palette and suggestion candidates |
 | `js/answers.js` | Sums and unit conversions; pure, no DOM |
 | `js/frecency.js` | Remembers which palette rows get picked |
-| `js/timelog.js` | Visits and seconds per site; no DOM, shared with the worker |
+| `js/timelog.js` | Visits and seconds per site, and the gate rules; no DOM, shared with the worker |
+| `js/mindful.js` | The gate panel in front of a watched site |
+| `js/gate.js` | Runs `gate.html` |
+| `js/quotes.js` | Quotes for the time-out page; real, with a source |
+| `js/theme.js` | Dark, light and the accent; shared by both pages |
 | `js/layout.js` | Widget zones, deck tabs and drag to arrange |
 | `js/guide.js` | The feature list behind `?` |
 | `js/scene.js` | Runs a moving background: canvas, size, frame clock, pointer |
 | `js/shader.js` | WebGL 2 shaders: shared noise, the pixel look, off-screen targets, shapes made of triangles, and compiling in the background |
 | `js/koi.js` | The koi pond painted in 2D; the pond's layers, and the scene used when there is no GPU |
 | `js/pond.js` | The koi pond under a WebGL 2 water surface; the only scene |
-| `worker.js` | Background worker: counts minutes, and nothing else |
+| `worker.js` | Background worker: counts time per site and guards watched sites |
 | `scripts/check.js` | Static checks |
 | `tests/` | Unit tests and a jsdom page test |
 
@@ -76,8 +81,9 @@ saves its own state and re-renders itself. `main.js` decides whether to call
 it at all.
 
 **Ask for optional permissions, never at install time.** `tabs`, `bookmarks`,
-`history` and `topSites` stay in `optional_permissions`, and the code degrades
-to nothing when they are missing.
+`history`, `topSites` and `webNavigation` stay in `optional_permissions`, and
+the code degrades to nothing when they are missing. A required permission
+must give no install warning (`idle`, `alarms`).
 
 **Nothing leaves the device** except the hosts the manifest names
 (picsum.photos for photos, open-meteo.com for weather, calendar.google.com
@@ -85,8 +91,11 @@ for the one feed address the user pastes). No analytics, no
 fonts from a CDN, no third-party favicon service — icons come from Chrome's
 own cache through `faviconUrl()`.
 
-**The background worker stays tiny and DOM-free.** It only counts minutes on
-the watch list, only when the user turns it on. Anything it imports must work
+**The background worker stays small and DOM-free.** It does two jobs, and
+each only when the user turns it on: it counts time and visits per site
+(**Count every site**), and it sends a tab to `gate.html` in front of a
+watched site (**In every tab**) or after a minute limit. The log stays on
+the device. Anything it imports must work
 without a `document`; `npm run check` walks its imports and fails otherwise.
 Put shared logic in `js/timelog.js`, never in `js/util.js`.
 

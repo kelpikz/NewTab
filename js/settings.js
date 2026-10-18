@@ -18,6 +18,8 @@ import { getCalendarFeed, saveCalendarFeed } from './storage.js';
 import { normalizeFeedUrl } from './calendar.js';
 import { LABELS, WIDGET_KEYS, placeWidget } from './layout.js';
 import { hasPermissions, requestPermissions, removePermissions, hasApi } from './platform.js';
+import { GUARD_PERMISSIONS, guardsEverywhere } from './mindful.js';
+import { DEFAULT_PHRASE, modeOf, normalizeHost } from './timelog.js';
 
 const ACCENTS = ['#7c9cff', '#5ad2a0', '#ffb454', '#ff7b8a', '#c792ea', '#4dd0e1', '#e0e0e0'];
 
@@ -26,6 +28,7 @@ const TABS = [
   ['appearance', 'Appearance'],
   ['widgets', 'Widgets'],
   ['search', 'Search'],
+  ['time', 'Time'],
   ['data', 'Data'],
 ];
 
@@ -392,112 +395,165 @@ function weatherSection(rerender) {
 }
 
 
-function mindfulSection(rerender) {
+const MODE_OPTIONS = [
+  ['pause', 'Pause'],
+  ['type', 'Type to enter'],
+  ['block', 'Block'],
+];
+
+function limitInput(site, key, unit, sites) {
+  return el(
+    'label',
+    { class: 'watch-limit' },
+    el('span', { text: unit }),
+    textInput({
+      type: 'number',
+      value: String(site[key] || ''),
+      placeholder: '–',
+      label: `Daily ${unit} limit for ${site.host}`,
+      onInput: debounce((value) => {
+        site[key] = Math.max(0, Number(value) || 0);
+        set({ mindful: { sites } }, actions.refreshLayout);
+      }, 500),
+    })
+  );
+}
+
+function watchRow(site, sites, rerender) {
+  return el(
+    'div',
+    { class: 'watch-row' },
+    el('span', { class: 'watch-host', text: site.host }),
+    select(
+      MODE_OPTIONS,
+      modeOf(site),
+      (value) => {
+        site.mode = value;
+        set({ mindful: { sites } });
+      },
+      `What ${site.host} does when you open it`
+    ),
+    limitInput(site, 'limitVisits', 'visits', sites),
+    limitInput(site, 'limitMinutes', 'minutes', sites),
+    button(
+      'Remove',
+      () =>
+        set({ mindful: { sites: sites.filter((item) => item.host !== site.host) } }, () => {
+          actions.refreshLayout?.();
+          rerender();
+        }),
+      'danger'
+    )
+  );
+}
+
+async function timePanel(rerender) {
   const config = settings().mindful;
   const sites = config.sites ?? [];
+  const everywhere = await guardsEverywhere();
 
-  const siteRows = sites.map((site) =>
-    el(
-      'div',
-      { class: 'watch-row' },
-      el('span', { class: 'watch-host', text: site.host }),
-      el(
-        'label',
-        { class: 'watch-limit' },
-        el('span', { text: 'visits' }),
-        textInput({
-          type: 'number',
-          value: String(site.limitVisits || ''),
-          placeholder: '–',
-          label: `Daily visit limit for ${site.host}`,
-          onInput: debounce((value) => {
-            site.limitVisits = Math.max(0, Number(value) || 0);
-            set({ mindful: { sites } }, actions.refreshLayout);
-          }, 500),
-        })
-      ),
-      el(
-        'label',
-        { class: 'watch-limit' },
-        el('span', { text: 'minutes' }),
-        textInput({
-          type: 'number',
-          value: String(site.limitMinutes || ''),
-          placeholder: '–',
-          label: `Daily minute limit for ${site.host}`,
-          onInput: debounce((value) => {
-            site.limitMinutes = Math.max(0, Number(value) || 0);
-            set({ mindful: { sites } }, actions.refreshLayout);
-          }, 500),
-        })
-      ),
-      button(
-        'Remove',
-        () =>
-          set({ mindful: { sites: sites.filter((item) => item.host !== site.host) } }, () => {
-            actions.refreshLayout?.();
-            rerender();
-          }),
-        'danger'
-      )
-    )
-  );
+  const addInput = textInput({
+    placeholder: 'Add a site, e.g. instagram.com',
+    label: 'Add a site to watch',
+    onEnter: async (value) => {
+      const host = normalizeHost(value);
+      if (!host || !host.includes('.') || sites.some((site) => site.host === host)) return;
+      await set(
+        { mindful: { sites: [...sites, { host, mode: 'pause', limitVisits: 0, limitMinutes: 0 }] } },
+        actions.refreshLayout
+      );
+      rerender();
+    },
+  });
 
-  return section(
-    'Time',
-    el('p', {
-      class: 'set-hint',
-      text: 'A watched site waits a few seconds before it opens, and says how often you have been there today.',
-    }),
-    row(
-      'Pause watched sites',
-      toggle(
-        config.enabled,
-        (on) => set({ mindful: { enabled: on } }, actions.refreshLayout),
-        'Pause watched sites'
-      )
-    ),
-    row(
-      'Seconds to wait',
-      slider({
-        value: config.pause,
-        min: 0,
-        max: 20,
-        label: 'Seconds to wait',
-        format: (value) => `${value}s`,
-        onInput: debounce((value) => set({ mindful: { pause: value } }), 400),
-      })
-    ),
-    row(
-      'Count the minutes',
-      toggle(
-        config.track,
-        async (on) => {
-          if (on && !(await requestPermissions(['tabs']))) {
-            toast('Chrome did not allow tab access.');
-            rerender();
-            return;
-          }
-          await set({ mindful: { track: on } }, actions.refreshLayout);
-          toast(on ? 'Minutes are counted from now on.' : 'Minutes are no longer counted.');
-        },
-        'Count the minutes'
-      ),
-      'Needs the tabs permission. Only watched sites are ever counted.'
-    ),
-    ...(siteRows.length
-      ? [el('p', { class: 'set-hint', text: 'Leave a limit empty for no limit.' }), ...siteRows]
-      : [el('p', { class: 'set-hint', text: 'Add sites from the Time widget.' })]),
-    row(
-      'Forget the tally',
-      button('Clear what was counted', async () => {
-        await clearVisitLog();
-        actions.refreshLayout?.();
-        toast('The tally starts over.');
+  return [
+    section(
+      'Watched sites',
+      el('p', {
+        class: 'set-hint',
+        text: 'Pause waits a few seconds. Type to enter asks you to type a sentence. Block keeps the site closed. Leave a limit empty for no limit.',
       }),
-      'Visits and minutes so far'
-    )
-  );
+      ...sites.map((site) => watchRow(site, sites, rerender)),
+      el('div', { class: 'watch-add' }, addInput)
+    ),
+    section(
+      'The gate',
+      row(
+        'Guard watched sites',
+        toggle(
+          config.enabled,
+          (on) => set({ mindful: { enabled: on } }, actions.refreshLayout),
+          'Guard watched sites'
+        )
+      ),
+      row(
+        'In every tab',
+        toggle(
+          everywhere,
+          async (on) => {
+            const ok = on
+              ? await requestPermissions(GUARD_PERMISSIONS)
+              : await removePermissions(['webNavigation']);
+            if (!ok) toast('Chrome did not change that permission.');
+            else toast(on ? 'Watched sites are guarded in every tab.' : 'Only links from this tab are guarded.');
+            rerender();
+          },
+          'In every tab'
+        ),
+        'Also stops a site you type in the address bar or open from a link. Chrome asks to read your browsing history.'
+      ),
+      row(
+        'Seconds to wait',
+        slider({
+          value: config.pause,
+          min: 0,
+          max: 20,
+          label: 'Seconds to wait',
+          format: (value) => `${value}s`,
+          onInput: debounce((value) => set({ mindful: { pause: value } }), 400),
+        })
+      ),
+      row(
+        'Sentence to type',
+        textInput({
+          value: config.phrase,
+          placeholder: DEFAULT_PHRASE,
+          label: 'Sentence to type',
+          onInput: debounce((value) => set({ mindful: { phrase: value.trim() || DEFAULT_PHRASE } }), 500),
+        }),
+        'For sites set to Type to enter'
+      )
+    ),
+    section(
+      'Counting',
+      row(
+        'Count every site',
+        toggle(
+          config.track,
+          async (on) => {
+            if (on && !(await requestPermissions(['tabs']))) {
+              toast('Chrome did not allow tab access.');
+              rerender();
+              return;
+            }
+            await set({ mindful: { track: on } }, actions.refreshLayout);
+            toast(on ? 'Time is counted from now on.' : 'Time is no longer counted.');
+          },
+          'Count every site'
+        ),
+        'Time and visits on each site, kept on this device. Time stops when you are away. A minute limit sends you to a time-out.'
+      ),
+      row(
+        'Forget the tally',
+        button('Clear what was counted', async () => {
+          await clearVisitLog();
+          actions.refreshLayout?.();
+          toast('The tally starts over.');
+        }),
+        'Visits and minutes so far'
+      )
+    ),
+  ];
 }
 
 
@@ -612,8 +668,23 @@ function widgetsPanel(rerender) {
       )
     ),
     weatherSection(rerender),
-    mindfulSection(rerender),
     calendarSection(rerender),
+    section(
+      'Routines',
+      row(
+        'Open a routine',
+        select(
+          [
+            ['window', 'In a new window'],
+            ['group', 'In this window, as a group'],
+          ],
+          config.routines.open,
+          (value) => set({ routines: { open: value } }),
+          'Open a routine'
+        ),
+        'A group takes the place of this tab'
+      )
+    ),
     section(
       'Focus timer',
       row(
@@ -870,6 +941,7 @@ async function renderPanel() {
   else if (activeTab === 'appearance') content = appearancePanel(rerender);
   else if (activeTab === 'widgets') content = widgetsPanel(rerender);
   else if (activeTab === 'search') content = await searchPanel(rerender);
+  else if (activeTab === 'time') content = await timePanel(rerender);
   else content = dataPanel();
 
   panelEl.replaceChildren(...content);

@@ -1,5 +1,6 @@
-import { sync, local } from './platform.js';
+import { sync, local, session } from './platform.js';
 import { todayKey } from './util.js';
+import { DEFAULT_PHRASE, PASSES_KEY } from './timelog.js';
 
 const LINKS_KEY = 'quicklinks';
 const GROUPS_KEY = 'quicklinkGroups';
@@ -60,9 +61,11 @@ export const DEFAULT_SETTINGS = {
     timer: true,
   },
   weather: { place: null, units: 'metric' },
+  routines: { open: 'window' }, // window | group, a group in this window
   // Sites you want to think twice about. Times are per device, so the list
   // syncs but the tally does not.
-  mindful: { enabled: true, pause: 5, track: false, sites: [] },
+  // Each site is { host, mode: pause | type | block, limitVisits, limitMinutes }.
+  mindful: { enabled: true, pause: 5, track: false, phrase: DEFAULT_PHRASE, sites: [] },
   timer: { focusMin: 25, breakMin: 5, chime: true },
 };
 
@@ -358,6 +361,20 @@ export async function getVisitLog() {
 
 export async function saveVisitLog(log) {
   await local.set({ [VISITS_KEY]: log });
+}
+
+/**
+ * The tabs you let in to a watched site: { tabId: { host, until } }. Tab ids
+ * mean nothing after a restart, so this lives in session storage and is not
+ * part of the backup.
+ */
+export async function getPasses() {
+  const result = await session.get(PASSES_KEY);
+  return result[PASSES_KEY] ?? {};
+}
+
+export async function savePasses(passes) {
+  await session.set({ [PASSES_KEY]: passes });
 }
 
 /**

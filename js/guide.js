@@ -42,6 +42,10 @@ export const FEATURES = [
       { name: 'Add from a tab', text: 'The Add site box offers the pages you have open.' },
       { name: 'Routines', text: 'A named set of sites. One click opens all of them.' },
       {
+        name: 'Routine as a group',
+        text: 'Settings, Widgets: open a routine as a named tab group in this window.',
+      },
+      {
         name: 'Save this window',
         text: 'The palette can turn the tabs you have open into a routine.',
       },
@@ -70,10 +74,22 @@ export const FEATURES = [
         name: 'Watch a site',
         text: 'A watched site waits a few seconds and tells you how often you have been today.',
       },
+      {
+        name: 'Pause, type or block',
+        text: 'Settings → Time. Each site can wait, ask you to type a sentence, or stay closed.',
+      },
+      {
+        name: 'In every tab',
+        text: 'Optional. The gate also stops a site you type in the address bar or open from a link.',
+      },
       { name: 'Daily limits', text: 'Set visits or minutes a day. The count turns red once past.' },
       {
-        name: 'Count the minutes',
-        text: 'Optional. Needs the tabs permission, and only ever counts the sites you named.',
+        name: 'Time out',
+        text: 'Past a minute limit, the tab changes to a time-out page with a real quote.',
+      },
+      {
+        name: 'Count every site',
+        text: 'Optional. Time and visits per site, on this device. Time stops when you are away. Press All on the Time card.',
       },
     ],
   },
@@ -88,7 +104,7 @@ export const FEATURES = [
       { name: 'Background', keys: 'B', text: 'A new photo, a gradient, a colour or your own image.' },
       {
         name: 'Koi pond',
-        text: 'Settings → Appearance → Animated. A moving koi pond, smooth or pixel. Click empty space, or move the pointer over the water.',
+        text: 'Settings → Appearance → Animated. A moving koi pond, smooth or pixel. Blossom and leaves drift on the water, and clouds pass over in the day. Click the water to splash it. Rest the pointer over it to bring a koi close.',
       },
       {
         name: 'Pond life',

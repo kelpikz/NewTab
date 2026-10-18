@@ -58,6 +58,9 @@ function area(name) {
 
 export const sync = area('sync');
 export const local = area('local');
+// Cleared when Chrome closes. Outside an extension it falls back to
+// localStorage, which is enough for the tests.
+export const session = area('session');
 
 /** True when the given chrome.* namespace is usable right now. */
 export function hasApi(name) {
@@ -107,6 +110,16 @@ export async function currentWindowTabs() {
     return tabs.filter((tab) => /^https?:/i.test(tab.url ?? ''));
   } catch {
     return [];
+  }
+}
+
+/** The id of the tab this page runs in, or null. Needs no permission. */
+export async function currentTabId() {
+  if (!hasApi('tabs')) return null;
+  try {
+    return (await chrome.tabs.getCurrent())?.id ?? null;
+  } catch {
+    return null;
   }
 }
 

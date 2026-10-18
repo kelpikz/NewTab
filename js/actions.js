@@ -1,8 +1,29 @@
 import { hasApi, openUrl } from './platform.js';
 import { allowVisit } from './mindful.js';
+import { settings } from './storage.js';
 
-export function openRoutine(routine) {
+// The new tab page closes, so the group takes its place in the tab strip.
+async function openAsGroup(routine) {
+  const tabs = [];
+  for (const [index, url] of routine.urls.entries()) {
+    tabs.push(await chrome.tabs.create({ url, active: index === 0 }));
+  }
+  try {
+    const groupId = await chrome.tabs.group({ tabIds: tabs.map((tab) => tab.id) });
+    if (hasApi('tabGroups')) await chrome.tabGroups.update(groupId, { title: routine.name });
+  } catch {
+    // An old Chrome has no groups; loose tabs are fine.
+  }
+  const current = await chrome.tabs.getCurrent?.();
+  if (current?.id) chrome.tabs.remove(current.id);
+}
+
+export async function openRoutine(routine) {
   if (!routine?.urls?.length) return;
+  if (settings().routines.open === 'group' && hasApi('tabs')) {
+    await openAsGroup(routine);
+    return;
+  }
   if (hasApi('windows')) {
     chrome.windows.create({ url: routine.urls, focused: true });
     return;
@@ -31,7 +52,7 @@ export async function activate(item, { newTab = false } = {}) {
     return;
   }
   if (item.type === 'routine') {
-    openRoutine(item.routine);
+    await openRoutine(item.routine);
     return;
   }
   if (item.type === 'tab' && !newTab) {

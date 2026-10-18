@@ -77,7 +77,9 @@ keep here. A site with no icon gets a coloured letter tile.
 
 ### Routines
 
-Named sets of URLs. One click opens all of them in a new window.
+Named sets of URLs. One click opens all of them in a new window. To open
+them in this window as one named tab group, go to **Settings → Widgets →
+Routines**.
 
 **Save my open tabs as a routine** in the palette turns the window you are in
 into a routine, so you can pick the same set of pages up tomorrow.
@@ -116,21 +118,36 @@ sits at the top, and days that have passed sink to the bottom.
 ### Time you lose
 
 Name a site that eats your day — `youtube.com`, `instagram.com` — in the
-**Time** widget. From then on, opening it from this tab shows a short pause
-first: the site, how many times you have been there today, how long you have
-spent, and a question. The **Open anyway** button only wakes up after a few
-seconds. `Esc`, or **Not now**, keeps you here.
+**Time** widget or in **Settings → Time**. Each watched site gets one of
+three modes:
 
-Give a site a daily limit of visits or minutes in **Settings → Widgets →
-Time**. The count turns amber near the limit and red past it.
+| Mode | What happens when you open it |
+| --- | --- |
+| **Pause** | A short wait. **Open anyway** wakes up after a few seconds. |
+| **Type to enter** | You type a sentence first — "I should not be doing this", or your own. A paste does not count. |
+| **Block** | The site stays closed. Only **Go back**. |
 
-**Count the minutes** turns on a background worker that adds up the time the
-watched sites are in front of you. It is off until you ask for it, it needs
-the `tabs` permission, and it records nothing about any site that is not on
-your list. Turn it off and the worker goes back to doing nothing.
+The gate shows the site, how many times you have been there today and how
+long you have spent. `Esc`, or **Not now**, keeps you where you were.
 
-Visits are counted for pages opened from this tab. Minutes are counted
-wherever you opened the page.
+By default the gate only stops links you open from this tab. Turn on **In
+every tab** and it also stops a site you type in the address bar, open from
+a bookmark or click in another page. This needs the `tabs` and
+`webNavigation` permissions; Chrome says it can "read your browsing history".
+The background worker sees the address before the page loads and shows the
+gate page in its place.
+
+Give a site a daily limit of visits or minutes. The count turns amber near
+the limit and red past it. Past a minute limit, the tab changes to a
+**time-out page** with a quote — Seneca, Annie Dillard, Feynman, Hamming and
+others, each with its source. **Five more minutes** lets you back in, and the
+time-out comes back when they are over.
+
+**Count every site** turns on a background worker that adds up the time each
+site is in front of you, and the visits to it. It needs the `tabs`
+permission. Time stops when you are away from the computer for a minute,
+unless a tab plays sound. Press **All** on the Time card to see every site
+for today or this week, and **+** to watch one. Nothing leaves this device.
 
 ### Calendar
 
@@ -180,7 +197,7 @@ pixel look.
 
 | Scene | What it does |
 | --- | --- |
-| Koi pond | Koi swim over a bed of stones under lily pads, in real water. Each koi has a round, scaled body in a classic coat, fins that paddle and a tail that flutters; deep koi turn blue and soft, and each throws a shadow on the floor. Ripples spread, cross and bend the view, light lines move on the floor and over the koi, and the koi leave a wake. The light follows the clock, from a warm dawn to a blue night with fireflies. When your weather says rain, snow or fog, the pond shows it. Rest the pointer and a koi comes to look; move it to draw a wake; click to scare the koi off. |
+| Koi pond | Koi swim over a bed of stones under lily pads, in real water. Each koi has a round, scaled body in a classic coat, fins that paddle and a tail that flutters; deep koi turn blue and soft, and each throws a shadow on the floor. Ripples spread, cross and bend the view, light lines move on the floor and over the koi, and the koi leave a wake. The light follows the clock, from a warm dawn to a blue night with fireflies. Blossom and a few leaves drift on the surface. By day, clouds pass over and gusts ruffle the water, so it glints. When your weather says rain, snow or fog, the pond shows it. Rest the pointer and a koi comes to look; move it to draw a wake; click to scare the koi off. |
 
 The water is drawn by the GPU with WebGL 2. The floor and the pads are
 painted once and kept. It runs at 30 frames a second or less and stops when
@@ -213,11 +230,14 @@ canvas.
 | --- | --- |
 | `storage`, `unlimitedStorage` | Your links, settings and the cached background |
 | `alarms` | Wakes the time worker once a minute, and only when you turn it on |
+| `idle` | Stops counting time while you are away from the computer |
 | `favicon` | Site icons from Chrome's own cache instead of a third party |
+| `tabGroups` | Gives the name of the routine to the tab group it opens in |
 | `picsum.photos` | Background photos |
 | `calendar.google.com` | Only the calendar address you paste |
 | `open-meteo.com` | Weather and city search |
-| `tabs`, `bookmarks`, `history`, `topSites` | **Optional.** Palette search, saving open tabs as a routine, filling a new tile from a tab, and counting minutes. Only if you turn them on |
+| `tabs`, `bookmarks`, `history`, `topSites` | **Optional.** Palette search, saving open tabs as a routine, filling a new tile from a tab, and counting time. Only if you turn them on |
+| `webNavigation` | **Optional.** Stops a watched site in any tab before it loads. Only if you turn on **In every tab** |
 
 ## Development
 
@@ -234,7 +254,8 @@ when jsdom is missing.
 
 ```
 manifest.json          Extension manifest (MV3)
-worker.js              Background worker: counts minutes, nothing else
+worker.js              Background worker: counts time and guards watched sites
+gate.html              The gate and time-out page, shown in any tab
 newtab.html            Page markup
 css/base.css           Design tokens, reset, buttons, dialogs
 css/app.css            Layout and components
@@ -259,7 +280,10 @@ js/ical.js             Reads an .ics feed, including repeats
 js/tasks.js            Task list
 js/habits.js           Habit tracker
 js/countdowns.js       Countdowns
-js/mindful.js          The pause in front of a watched site
+js/mindful.js          The gate in front of a watched site
+js/gate.js             Runs the gate page
+js/quotes.js           Quotes for the time-out page
+js/theme.js            Dark, light and the accent colour
 js/timelog.js          Visits and seconds per site per day
 js/screentime.js       The Time widget
 js/layout.js           Zones, the deck tabs and dragging cards about

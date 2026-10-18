@@ -10,7 +10,7 @@ const SCENE_BASE = '#0b1220';
 export const SCENES = {
   pond: {
     label: 'Koi pond',
-    text: 'Koi in real water. Ripples bend the light, and the rain falls when it rains outside.',
+    text: 'Koi in real water. Ripples bend the light, clouds pass over, and the rain falls when it rains outside.',
     load: () => import('./pond.js'),
   },
 };
