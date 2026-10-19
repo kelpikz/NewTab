@@ -234,8 +234,8 @@ export function initLayout(options) {
 }
 
 /**
- * Put every card in its zone and decide what is on show. Call it after the
- * cards have been drawn; moving a card keeps whatever is inside it.
+ * Put every card holder in its zone and decide what is on show. The cards
+ * can load before or after this; moving a holder keeps whatever is inside it.
  */
 export async function applyLayout({ widgets, order, placement, layout, width }) {
   const chosen = zonesOf({ order, placement, widgets });

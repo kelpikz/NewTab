@@ -151,7 +151,20 @@ async function refreshLayout() {
   show(dom.timer, widgets.timer);
   show(dom.widgets, WIDGET_KEYS.some((key) => widgets[key]));
 
+  // Network requests must not hold back the clock, sites or deck.
+  refreshWeather().catch(console.error);
+  if (widgets.calendar) {
+    renderCalendar(dom.calendar, { onConfigure: () => openSettings('widgets') }).catch(console.error);
+  }
+
+  const config = settings();
   await Promise.all([
+    applyLayout({
+      widgets,
+      order: config.widgetOrder,
+      placement: config.widgetPlacement,
+      layout: config.widgetLayout,
+    }),
     refreshClock(),
     widgets.focus ? renderDailyFocus(dom.focus) : null,
     refreshSearch(),
@@ -160,21 +173,10 @@ async function refreshLayout() {
     widgets.habits ? renderHabits(dom.habits) : null,
     widgets.countdowns ? renderCountdowns(dom.countdowns) : null,
     widgets.mindful ? renderScreenTime(dom.mindful) : null,
-    widgets.calendar ? renderCalendar(dom.calendar, { onConfigure: () => openSettings('widgets') }) : null,
     refreshNotes(),
     widgets.routines ? renderRoutines(dom.routines) : null,
-    refreshWeather(),
     refreshTimer(),
   ]);
-
-  // The layout decides where each card sits, so it runs after they are drawn.
-  const config = settings();
-  await applyLayout({
-    widgets,
-    order: config.widgetOrder,
-    placement: config.widgetPlacement,
-    layout: config.widgetLayout,
-  });
 }
 
 /* ------------------------------------------------------------------ */
