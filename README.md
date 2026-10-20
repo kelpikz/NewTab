@@ -1,307 +1,140 @@
 # My New Tab
 
-A Chrome new tab replacement: quick links, a command palette that also does
-sums, weather with a forecast, your calendar, tasks, habits, countdowns,
-notes, a focus timer, and a pause in front of the sites that eat your day.
-No build step, no dependencies, no tracking.
+A calm new tab page for Chrome. It has a command palette that also does sums,
+quick links, weather, your calendar, tasks, habits, notes, and a pause in front
+of the sites that eat your day. A koi pond can swim behind it all.
 
-Press `?` at any time for a sheet that lists everything it does.
+- No account, no tracking, no build step.
+- No runtime dependencies.
+- Your data stays on your device.
 
-## Install
+[![Watch the demo](docs/demo.jpg)](docs/demo.mp4)
 
-1. Open `chrome://extensions` (or `brave://extensions`).
-2. Turn on **Developer mode** (top right).
-3. Click **Load unpacked** and pick this folder.
-4. Open a new tab.
+*Click the picture to watch a 35 second demo: the koi pond, the command palette and the card deck.*
 
-## Features
+## Try it in one minute
 
-### Command palette — `Ctrl`/`Cmd` + `K`
+1. Get this folder: clone the repo or download it as a zip and unzip it.
+2. Open `chrome://extensions` (or `brave://extensions`).
+3. Turn on **Developer mode** (top right).
+4. Click **Load unpacked** and pick this folder.
+5. Open a new tab.
 
-One box that searches your quick links, routines, open tabs, bookmarks,
-history and frequent sites, and also runs actions ("Add a site", "Switch to
-the light theme", "Download a backup"). Type a web address to go straight
-there, or pick a search engine from the bottom of the list.
+You do not need Node or `npm install` to use it. Chrome loads the files as
+they are.
 
-Tabs, bookmarks, history and frequent sites are **optional permissions**. The
-extension does not ask for them at install time. Turn them on from the palette
-or from **Settings → Search**, and turn them off again whenever you want.
-Nothing is ever sent off your computer.
+## Things to try first
 
-The palette also learns. Every row you pick is counted, and rows you pick
-often — especially for the same words — rise to the top next time. Recent
-picks count for more than old ones. Clear the record in **Settings → Data**.
-
-#### Catch a thought
-
-Type something that is neither an address nor a sum and the palette offers to
-keep it: **Add task "call the plumber"**, or **Make "finish the draft"
-today's focus**.
-
-#### Instant answers
-
-Type a sum or a conversion and the result appears at the top of the list.
-`Enter` copies it.
-
-| Type this | Get this |
+| Do this | What happens |
 | --- | --- |
-| `24 * 7` | 168 |
-| `(2 + 3) ^ 4` | 625 |
-| `20% of 60` | 12 |
-| `120 + 10%` | 132 |
-| `sqrt(144)` | 12 |
-| `10 km in miles` | 6.2137119 mi |
-| `72f to c` | 22.222222 c |
-| `1 gb in mb` | 1,000 mb |
-| `3 cups to ml` | 709.76471 ml |
+| Press `?` | A sheet lists everything the page can do. |
+| Press `Ctrl`/`Cmd` + `K` | The command palette opens. |
+| Type `20% of 60` in the palette | You get `12`. `Enter` copies it. |
+| Type `10 km in miles` | You get `6.2137119 mi`. |
+| Type a plain thought, like `call the plumber` | The palette offers to save it as a task or today's focus. |
+| Press `W` | The deck shows the next card. |
+| Drag a card by the grip on its top edge | It moves to the left or right rail. |
+| Press `,` | Settings open. |
+| Settings → Appearance → **Animated** | A koi pond moves behind the page. Click the water to splash it. |
+| Add `youtube.com` in the **Time** card | A short pause waits in front of that site. |
 
-Lengths, masses, volumes, data sizes, time, speed, area, angles and
-temperature all convert. The sums run here — nothing is sent anywhere, and no
-`eval()` is used.
+## What is inside
 
-### Search bar
+**Find and go**
+- A command palette for your links, routines, open tabs, bookmarks, history
+  and actions. Rows you pick often rise to the top.
+- Instant answers: sums, percentages and unit conversions. No `eval()` is used.
+- A search bar. Type `g:`, `ch:` or `cl:` to pick an engine, or add your own
+  in **Settings → Search**.
+- Quick links in groups. Drag to reorder. Press `1`–`9` to open one.
+- Routines: a named set of sites that opens with one click.
 
-Search the web, or pick a suggestion from your own tabs, bookmarks and
-history. Type `g:`, `ch:` or `cl:` to jump to an engine. Add your own engines
-in **Settings → Search** — any URL with `{query}` in it works.
-`Enter` searches, `Shift`+`Enter` adds a newline.
+**Your day**
+- A clock, a greeting and one daily focus that clears at midnight.
+- Tasks, habits (a dot per day), countdowns, notes and a focus timer.
+- Weather from Open-Meteo, and a calendar from one secret `.ics` address.
 
-### Quick links
+**Time you lose**
+- Name a site. Each site can **pause** you, ask you to **type a sentence**, or
+  stay **blocked**.
+- Set a daily limit of visits or minutes. Past a minute limit, the tab shows a
+  time-out page with a real quote and its source.
+- Turn on **In every tab** to also stop sites you type in the address bar.
+- Turn on **Count every site** to see time and visits per site.
 
-Sites grouped into tabs. Drag a tile to reorder it, drag it onto a tab name to
-move it to that group, drag tabs to reorder the groups. Press `1`–`9` to open
-the first nine links of the active group.
+**Make it yours**
+- Dark, light or match the system, with an accent colour you pick.
+- Backgrounds: a photo, a gradient, a colour, your own image, or the koi pond.
+- Every card can be turned off. **Settings → Data** saves a backup file and
+  reads it back.
 
-Favicons come from Chrome's own cache, so no third party sees which sites you
-keep here. A site with no icon gets a coloured letter tile.
-
-### Routines
-
-Named sets of URLs. One click opens all of them in a new window. To open
-them in this window as one named tab group, go to **Settings → Widgets →
-Routines**.
-
-**Save my open tabs as a routine** in the palette turns the window you are in
-into a routine, so you can pick the same set of pages up tomorrow.
-
-### Clock, greeting and daily focus
-
-A large clock (12 or 24 hour), a greeting with your name, and one thing to
-finish today. The focus clears itself at midnight.
-
-### Weather
-
-Current temperature, conditions and the day's high and low, from
-[Open-Meteo](https://open-meteo.com) — free, no account, no API key. Search for
-your city in **Settings → Widgets**. Readings are cached for 30 minutes.
-
-Click the reading for the rest: how it feels, humidity, wind, and the next
-five days with their chance of rain.
-
-### Tasks and notes
-
-A checklist that syncs across your Chrome profiles, and a scratchpad that saves
-itself as you type. Notes stay on this device only.
-
-### Habits
-
-One row per habit and one dot per day, for the last seven days. Click a dot to
-mark that day, click it again to undo, and the number on the right counts the
-days you have kept the run. A run stays alive until you miss a whole day, so
-it does not drop just because today is not done yet.
-
-### Countdowns
-
-Days you are counting towards — a trip, a release, a birthday. The nearest one
-sits at the top, and days that have passed sink to the bottom.
-
-### Time you lose
-
-Name a site that eats your day — `youtube.com`, `instagram.com` — in the
-**Time** widget or in **Settings → Time**. Each watched site gets one of
-three modes:
-
-| Mode | What happens when you open it |
-| --- | --- |
-| **Pause** | A short wait. **Open anyway** wakes up after a few seconds. |
-| **Type to enter** | You type a sentence first — "I should not be doing this", or your own. A paste does not count. |
-| **Block** | The site stays closed. Only **Go back**. |
-
-The gate shows the site, how many times you have been there today and how
-long you have spent. `Esc`, or **Not now**, keeps you where you were.
-
-By default the gate only stops links you open from this tab. Turn on **In
-every tab** and it also stops a site you type in the address bar, open from
-a bookmark or click in another page. This needs the `tabs` and
-`webNavigation` permissions; Chrome says it can "read your browsing history".
-The background worker sees the address before the page loads and shows the
-gate page in its place.
-
-Give a site a daily limit of visits or minutes. The count turns amber near
-the limit and red past it. Past a minute limit, the tab changes to a
-**time-out page** with a quote — Seneca, Annie Dillard, Feynman, Hamming and
-others, each with its source. **Five more minutes** lets you back in, and the
-time-out comes back when they are over.
-
-**Count every site** turns on a background worker that adds up the time each
-site is in front of you, and the visits to it. It needs the `tabs`
-permission. Time stops when you are away from the computer for a minute,
-unless a tab plays sound. Press **All** on the Time card to see every site
-for today or this week, and **+** to watch one. Nothing leaves this device.
-
-### Calendar
-
-Paste a calendar feed address and the next few days appear in the **Calendar**
-widget, with the event that is running now picked out.
-
-In Google Calendar: **Settings → your calendar → Secret address in iCal
-format**. Nothing is signed in to and no account is linked — the page fetches
-that one address. It is a secret, so it stays on this device and is left out
-of the backup file.
-
-A time carries a zone name that only a full timezone database could resolve,
-so times are read on this machine's clock. That is right whenever your
-calendar and your computer agree on the timezone.
-
-### Focus timer
-
-A pomodoro timer in the top bar. It remembers its end time, so it keeps
-counting even if you close and reopen the tab. It only runs while a new tab is
-open — nothing counts it down in the background.
-
-### Arrange it your way
-
-The page has three places for cards: a rail down the left, the middle, and a
-rail down the right.
-
-Hover a card and a grip appears on its top edge. Drag it to either rail, drop
-it on another card to sit in front of it, or drag it back to the middle. Or
-set the side of each card in **Settings → Widgets → Cards**.
-
-Cards in the middle sit in a **deck**: a row of tabs with one card under them,
-so the page fits without scrolling. `W` steps to the next one. Prefer them all
-at once? **Settings → Widgets → Layout → All at once**.
-
-A window under about 1440px has no room for rails, so their cards go back to
-the middle until there is room again. What you chose is remembered either
-way.
-
-### Appearance
-
-Dark, light or match-system. Seven accent colours or your own. Backgrounds
-from [picsum.photos](https://picsum.photos), a gradient, a solid colour or your
-own image, with dim and blur sliders. Every widget can be turned off.
-
-**Animated** replaces the picture with a moving koi pond. Pick a smooth or a
-pixel look.
-
-| Scene | What it does |
-| --- | --- |
-| Koi pond | Koi swim over a bed of stones under lily pads, in real water. Each koi has a round, scaled body in a classic coat, fins that paddle and a tail that flutters; deep koi turn blue and soft, and each throws a shadow on the floor. Ripples spread, cross and bend the view, light lines move on the floor and over the koi, and the koi leave a wake. The light follows the clock, from a warm dawn to a blue night with fireflies. Blossom and a few leaves drift on the surface. By day, clouds pass over and gusts ruffle the water, so it glints. When your weather says rain, snow or fog, the pond shows it. Rest the pointer and a koi comes to look; move it to draw a wake; click to scare the koi off. |
-
-The water is drawn by the GPU with WebGL 2. The floor and the pads are
-painted once and kept. It runs at 30 frames a second or less and stops when
-the tab is hidden. With reduced motion on, you get one still frame. On a
-device with no usable GPU, the pond is drawn without water on a plain 2D
-canvas.
-
-### Backup
-
-**Settings → Data** exports everything to a JSON file and imports it back.
-
-## Keyboard shortcuts
+### Keyboard shortcuts
 
 | Keys | Action |
 | --- | --- |
 | `Ctrl`/`Cmd` + `K` | Command palette |
-| `W` | Show the next widget |
 | `/` | Jump to the search bar |
 | `?` | What this tab does |
+| `W` | Show the next card |
 | `1`–`9` | Open a quick link (`Shift` for a new tab) |
-| `Shift` + `←`/`→` | Switch tab group |
-| `B` | Load a new background photo |
+| `Shift` + `←`/`→` | Switch link group |
+| `B` | New background photo |
 | `N` | Jump to notes |
 | `T` | Add a task |
 | `,` | Open settings |
 
-## Permissions
+## Privacy and permissions
 
-| Permission | Why |
+Nothing leaves your device except these calls:
+
+| Host | Why |
 | --- | --- |
-| `storage`, `unlimitedStorage` | Your links, settings and the cached background |
-| `alarms` | Wakes the time worker once a minute, and only when you turn it on |
-| `idle` | Stops counting time while you are away from the computer |
-| `favicon` | Site icons from Chrome's own cache instead of a third party |
-| `tabGroups` | Gives the name of the routine to the tab group it opens in |
 | `picsum.photos` | Background photos |
-| `calendar.google.com` | Only the calendar address you paste |
 | `open-meteo.com` | Weather and city search |
-| `tabs`, `bookmarks`, `history`, `topSites` | **Optional.** Palette search, saving open tabs as a routine, filling a new tile from a tab, and counting time. Only if you turn them on |
-| `webNavigation` | **Optional.** Stops a watched site in any tab before it loads. Only if you turn on **In every tab** |
+| `calendar.google.com` | Only the one calendar address you paste |
 
-## Development
+Site icons come from Chrome's own cache, not from a third party.
 
-No build step — Chrome loads the source directly.
+Chrome asks for no scary permission at install time. Some features need more.
+The page asks only when you turn that feature on, and it works without them.
+
+| Permission | When |
+| --- | --- |
+| `tabs`, `bookmarks`, `history`, `topSites` | Optional. Palette search, saving open tabs as a routine, counting time. |
+| `webNavigation` | Optional. Only for **In every tab**. Chrome says it can "read your browsing history". |
+
+The permissions Chrome grants at install are `storage`, `unlimitedStorage`,
+`favicon`, `alarms`, `idle` and `tabGroups`. None of them shows an install
+warning.
+
+## If something looks wrong
+
+- **The pond is plain, without moving water.** Your browser has no usable
+  WebGL 2. The page draws a simpler 2D pond instead.
+- **The pond does not move.** Reduced motion is on in your system. You get one
+  still frame.
+- **The window is narrow and the side rails are gone.** Rails need about
+  1440px. Your choice comes back when the window is wide enough.
+- **A watched site does not stop in other tabs.** Turn on **In every tab** in
+  **Settings → Time**, and allow the permissions it asks for.
+
+## Work on it
+
+There is no build step. Edit a file, then reload the extension at
+`chrome://extensions`.
 
 ```bash
-npm install    # jsdom, the only dependency, and only for the page tests
-npm test       # unit tests plus a jsdom run of the whole page
+npm install    # jsdom, only for the page tests
+npm test       # unit tests and a jsdom run of the whole page
 npm run check  # ids, CSS classes, imports and manifest paths all resolve
 ```
 
-`npm test` works without `npm install` too — the page tests skip themselves
+`npm test` also works without `npm install`. The page tests skip themselves
 when jsdom is missing.
 
-```
-manifest.json          Extension manifest (MV3)
-worker.js              Background worker: counts time and guards watched sites
-gate.html              The gate and time-out page, shown in any tab
-newtab.html            Page markup
-css/base.css           Design tokens, reset, buttons, dialogs
-css/app.css            Layout and components
-js/main.js             Entry point: theme, layout, dialogs, wiring
-js/platform.js         chrome.* wrapper with a localStorage fallback
-js/storage.js          Every stored key, the defaults and backup
-js/util.js             DOM builder and small helpers
-js/omni.js             Gathers palette and suggestion candidates
-js/fuzzy.js            Match scoring and ranking
-js/frecency.js         Remembers which rows get picked
-js/answers.js          Sums and unit conversions
-js/palette.js          Command palette
-js/actions.js          Runs whatever a result row stands for
-js/search.js           Search bar with suggestions
-js/engines.js          Search engine URLs and prefixes
-js/quicklinks.js       Quick link tiles, groups, drag and drop
-js/clock.js            Clock and greeting
-js/focus.js            Daily focus
-js/weather.js          Open-Meteo client and icons
-js/calendar.js         Calendar widget
-js/ical.js             Reads an .ics feed, including repeats
-js/tasks.js            Task list
-js/habits.js           Habit tracker
-js/countdowns.js       Countdowns
-js/mindful.js          The gate in front of a watched site
-js/gate.js             Runs the gate page
-js/quotes.js           Quotes for the time-out page
-js/theme.js            Dark, light and the accent colour
-js/timelog.js          Visits and seconds per site per day
-js/screentime.js       The Time widget
-js/layout.js           Zones, the deck tabs and dragging cards about
-js/guide.js            The "what this tab does" sheet
-js/notes.js            Scratchpad
-js/timer.js            Focus timer
-js/routines.js         Routines widget
-js/routine-dialog.js   Add/edit routine dialog
-js/background.js       Background sources and caching
-js/scene.js            Runs a moving background: canvas, size, clock, pointer
-js/shader.js           One full-screen WebGL 2 shader, with shared noise
-js/koi.js              The koi pond painted in 2D: floor, koi and pads
-js/pond.js             Scene: the koi pond under a water surface
-js/settings.js         Settings dialog
-js/controls.js         Form controls for the settings dialog
-js/card.js             Widget card shell
-js/shortcuts.js        Keyboard shortcuts and the help sheet
-scripts/check.js       Static checks
-tests/                 Unit and page tests
-AGENTS.md              Conventions, for people and for coding agents
-```
+[AGENTS.md](AGENTS.md) has the file layout and the rules for code, for people
+and for coding agents. It also shows how to add a widget or a scene.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
