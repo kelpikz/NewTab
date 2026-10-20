@@ -165,7 +165,7 @@ export async function saveEngines(engines) {
 const DEFAULT_ROUTINES = [
   {
     name: 'Morning',
-    urls: ['https://mail.google.com', 'https://news.ycombinator.com', 'https://devurls.com'],
+    urls: ['https://mail.google.com', 'https://news.ycombinator.com'],
   },
   { name: 'Dev', urls: ['https://github.com', 'https://claude.ai', 'https://chatgpt.com'] },
 ];
@@ -184,10 +184,10 @@ export async function saveRoutines(routines) {
 /* ------------------------------------------------------------------ */
 
 const DEFAULT_LINKS = [
-  { name: 'Instagram', url: 'https://www.instagram.com' },
+  { name: 'GitHub', url: 'https://github.com' },
   { name: 'Claude', url: 'https://claude.ai' },
   { name: 'HN', url: 'https://news.ycombinator.com' },
-  { name: 'DevURLS', url: 'https://devurls.com' },
+  { name: 'MDN', url: 'https://developer.mozilla.org' },
 ];
 
 export async function getGroups() {

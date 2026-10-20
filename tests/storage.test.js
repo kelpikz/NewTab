@@ -100,9 +100,9 @@ test('updateSettings merges deeply and persists', async () => {
 
 test('a stored setting from an older version keeps new defaults', async () => {
   await loadSettings();
-  await updateSettings({ name: 'Ajitha' });
+  await updateSettings({ name: 'Sam' });
   const reloaded = await loadSettings();
-  assert.equal(reloaded.name, 'Ajitha');
+  assert.equal(reloaded.name, 'Sam');
   assert.equal(reloaded.timer.focusMin, DEFAULT_SETTINGS.timer.focusMin);
 });
 
@@ -177,7 +177,7 @@ test('the daily focus resets on a new day', async () => {
 
 test('export then import restores the data', async () => {
   await loadSettings();
-  await updateSettings({ name: 'Ajitha' });
+  await updateSettings({ name: 'Sam' });
   await addLink('general', { name: 'Keep', url: 'https://keep.dev' });
   await saveTasks([{ id: '1', text: 'Keep me', done: false }]);
 
@@ -185,7 +185,7 @@ test('export then import restores the data', async () => {
   resetStorage();
 
   await importData(backup);
-  assert.equal((await loadSettings()).name, 'Ajitha');
+  assert.equal((await loadSettings()).name, 'Sam');
   assert.ok((await getGroups())[0].links.some((link) => link.name === 'Keep'));
   assert.equal((await getTasks())[0].text, 'Keep me');
 });
